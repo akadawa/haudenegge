@@ -163,32 +163,38 @@ server.listen(PORT, async () => {
                   const hpStyle = window.getComputedStyle(hpLabel);
                   console.log('HP label white-space: ' + hpStyle.whiteSpace);
 
-                  // Überprüfe HUD-Positionierung: Unten in der Mitte & keine Überlagerung
-                  const bottomRow = document.querySelector('.hud-bottom-row');
+                  // Überprüfe HUD-Positionierung: XP, Items & HP alle unten in der Mitte & keine Überlagerung
+                  const bottomPanel = document.querySelector('.hud-bottom-panel');
+                  const xpBox = document.querySelector('.xp-bar-container');
                   const itemRow = document.querySelector('.hud-item-row');
+                  const bottomRow = document.querySelector('.hud-bottom-row');
                   const hpBox = document.querySelector('.hp-bar-container');
                   const shellBox = document.querySelector('.shells-box');
                   const stageBadge = document.getElementById('stage-badge');
 
-                  const bRect = bottomRow.getBoundingClientRect();
+                  const pRect = bottomPanel.getBoundingClientRect();
+                  const xRect = xpBox.getBoundingClientRect();
                   const iRect = itemRow.getBoundingClientRect();
+                  const bRect = bottomRow.getBoundingClientRect();
                   const hpRect = hpBox.getBoundingClientRect();
                   const sRect = shellBox.getBoundingClientRect();
                   const stRect = stageBadge.getBoundingClientRect();
 
                   const screenCenterX = window.innerWidth / 2;
-                  const rowCenterX = (bRect.left + bRect.right) / 2;
-                  const isCentered = Math.abs(screenCenterX - rowCenterX) < 15;
-                  const isAtBottom = bRect.bottom <= window.innerHeight && bRect.top >= window.innerHeight - 80;
-                  const overlapsItems = !(bRect.top >= iRect.bottom || bRect.bottom <= iRect.top || bRect.left >= iRect.right || bRect.right <= iRect.left);
+                  const panelCenterX = (pRect.left + pRect.right) / 2;
+                  const isCentered = Math.abs(screenCenterX - panelCenterX) < 15;
+                  const isAtBottom = pRect.bottom <= window.innerHeight && pRect.top >= window.innerHeight - 150;
+                  const xpAboveItems = xRect.bottom <= iRect.top + 2;
+                  const itemsAboveHp = iRect.bottom <= bRect.top + 2;
                   const elementsOverlap = !(hpRect.right <= sRect.left && sRect.right <= stRect.left);
 
-                  console.log('HUD bottom-row centered: ' + isCentered + ' (offset: ' + Math.abs(screenCenterX - rowCenterX).toFixed(1) + 'px)');
-                  console.log('HUD bottom-row at bottom: ' + isAtBottom + ' (bottom: ' + bRect.bottom + ', window: ' + window.innerHeight + ')');
-                  console.log('HUD overlaps item-row: ' + overlapsItems);
+                  console.log('HUD panel centered: ' + isCentered + ' (offset: ' + Math.abs(screenCenterX - panelCenterX).toFixed(1) + 'px)');
+                  console.log('HUD panel at bottom: ' + isAtBottom + ' (bottom: ' + pRect.bottom + ', window: ' + window.innerHeight + ')');
+                  console.log('XP bar above item-row: ' + xpAboveItems);
+                  console.log('Item-row above HP-row: ' + itemsAboveHp);
                   console.log('HUD elements overlap each other: ' + elementsOverlap);
-                  if (!isCentered || !isAtBottom || overlapsItems || elementsOverlap) {
-                    throw new Error('HUD positioning error: centered=' + isCentered + ', atBottom=' + isAtBottom + ', overlapsItems=' + overlapsItems + ', elementsOverlap=' + elementsOverlap);
+                  if (!isCentered || !isAtBottom || !xpAboveItems || !itemsAboveHp || elementsOverlap) {
+                    throw new Error('HUD positioning error: centered=' + isCentered + ', atBottom=' + isAtBottom + ', xpAbove=' + xpAboveItems + ', itemsAbove=' + itemsAboveHp + ', elementsOverlap=' + elementsOverlap);
                   }
                 `
               });

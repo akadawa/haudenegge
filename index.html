@@ -11,22 +11,9 @@
   <div id="game-container">
     <canvas id="gameCanvas"></canvas>
 
-    <!-- In-Game HUD (exakt wie auf dem Mockup-Foto) -->
+    <!-- In-Game HUD -->
     <div id="hud">
-      <!-- Links Oben: XP-Balken & darunter die Waffenslots -->
-      <div class="hud-left-col">
-        <div class="xp-bar-container">
-          <span class="xp-tag">XP</span>
-          <div id="xp-fill" class="xp-bar-fill"></div>
-          <span id="xp-label" class="xp-label">LV 1 (0 / 5)</span>
-        </div>
-        <div class="hud-item-row">
-          <div id="weapon-slots" class="inventory-slots"></div>
-          <div id="passive-slots" class="inventory-slots"></div>
-        </div>
-      </div>
-
-      <!-- Mitte Oben: Digitaluhr, Kills, Boss-Balken -->
+      <!-- Oben Mitte: Digitaluhr, Kills, Boss-Balken -->
       <div class="hud-center-col">
         <div id="timer-box" class="timer-box">00:00</div>
         <div class="kills-box">💀 <span id="kill-count">0</span></div>
@@ -38,7 +25,7 @@
         </div>
       </div>
 
-      <!-- Rechts Oben: 3D-Arcade-Titel "HAU DEN EGGE" & Pause-Button -->
+      <!-- Oben Rechts: 3D-Arcade-Titel "HAU DEN EGGE" & Pause-Button -->
       <div class="hud-right-col">
         <div class="hud-arcade-title">
           <div class="title-top">HAU DEN</div>
@@ -47,14 +34,31 @@
         <button id="btn-hud-pause" class="hud-pause-btn" title="Pause (Esc)">⏸</button>
       </div>
 
-      <!-- Links Unten: HP-Balken & Stage-Badge -->
-      <div class="hud-bottom-row">
-        <div class="hp-bar-container">
-          <div id="hp-fill" class="hp-bar-fill"></div>
-          <span id="hp-label" class="hp-label">100 / 100</span>
+      <!-- Unten Mitte: Kompletter Spieler-Status (XP-Balken, Item-Liste, HP-Balken & Stage-Badge) -->
+      <div class="hud-bottom-panel">
+        <!-- 1. XP-Balken -->
+        <div class="xp-bar-container">
+          <span class="xp-tag">XP</span>
+          <div id="xp-fill" class="xp-bar-fill"></div>
+          <span id="xp-label" class="xp-label">LV 1 (0 / 5)</span>
         </div>
-        <div class="shells-box">🥚 <span id="shell-count">0</span></div>
-        <div id="stage-badge" class="stage-badge">Stage 1 • Jahrmarkt</div>
+
+        <!-- 2. Waffenslots & Passivslots -->
+        <div class="hud-item-row">
+          <div id="weapon-slots" class="inventory-slots"></div>
+          <div class="inventory-divider"></div>
+          <div id="passive-slots" class="inventory-slots"></div>
+        </div>
+
+        <!-- 3. HP-Balken, Eierschalen & Stage-Badge -->
+        <div class="hud-bottom-row">
+          <div class="hp-bar-container">
+            <div id="hp-fill" class="hp-bar-fill"></div>
+            <span id="hp-label" class="hp-label">100 / 100</span>
+          </div>
+          <div class="shells-box">🥚 <span id="shell-count">0</span></div>
+          <div id="stage-badge" class="stage-badge">Stage 1 • Jahrmarkt</div>
+        </div>
       </div>
     </div>
 

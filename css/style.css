@@ -61,25 +61,30 @@ canvas#gameCanvas {
   pointer-events: none;
   z-index: 10;
   padding: 10px 16px;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: start;
-  gap: 12px;
   box-sizing: border-box;
 }
 
-/* Links Oben: XP-Balken & darunter die Waffenslots (aus dem Mockup-Foto) */
-.hud-left-col {
+/* Unten Mitte: Gesamtes Spieler-Panel (XP-Balken, Items, HP-Balken & Stage) */
+.hud-bottom-panel {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  max-width: 540px;
+  align-items: center;
+  gap: 6px;
+  z-index: 20;
+  pointer-events: none;
+  width: max-content;
+  max-width: 96vw;
 }
 
 .xp-bar-container {
   display: flex;
   align-items: center;
-  height: 22px;
+  height: 20px;
+  width: 100%;
   background: rgba(10, 8, 16, 0.95);
   border: 2px solid #3c4866;
   border-radius: 4px;
@@ -92,7 +97,7 @@ canvas#gameCanvas {
   background: #142850;
   color: #6ee8ff;
   font-family: 'Press Start 2P', monospace;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: bold;
   padding: 0 8px;
   height: 100%;
@@ -112,22 +117,34 @@ canvas#gameCanvas {
 
 .xp-label {
   position: absolute;
-  left: 56px;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 8px;
   color: #fff;
   text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
   z-index: 2;
+  letter-spacing: 0.5px;
 }
 
 .hud-item-row {
   display: flex;
   gap: 6px;
   align-items: center;
+  justify-content: center;
 }
 
 .inventory-slots {
   display: flex;
-  gap: 6px;
+  gap: 5px;
+}
+
+.inventory-divider {
+  width: 2px;
+  height: 28px;
+  background: linear-gradient(180deg, transparent, rgba(201, 152, 52, 0.6), transparent);
+  margin: 0 4px;
 }
 
 .inv-slot {
@@ -167,10 +184,15 @@ canvas#gameCanvas {
 
 /* Mitte Oben: Digitaluhr, Kills, Boss-Balken */
 .hud-center-col {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  z-index: 15;
 }
 
 .timer-box {
@@ -228,10 +250,14 @@ canvas#gameCanvas {
 
 /* Rechts Oben: 3D-Arcade-Titel "HAU DEN EGGE" & Pause */
 .hud-right-col {
+  position: absolute;
+  top: 10px;
+  right: 16px;
   display: flex;
   align-items: flex-start;
   justify-content: flex-end;
   gap: 12px;
+  z-index: 15;
 }
 
 .hud-arcade-title {
@@ -286,18 +312,12 @@ canvas#gameCanvas {
   color: var(--accent-gold);
 }
 
-/* Unten Mitte: HP-Balken, Eierschalen, Stage-Badge (zentriert, keine Überlagerung) */
+/* HP-Balken, Eierschalen, Stage-Badge in der unteren Zeile */
 .hud-bottom-row {
-  position: absolute;
-  bottom: 14px;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 12px;
-  z-index: 20;
-  pointer-events: none;
   white-space: nowrap;
 }
 
@@ -927,7 +947,7 @@ canvas#gameCanvas {
 /* Toast Nachricht */
 #toast {
   position: absolute;
-  bottom: 54px;
+  bottom: 110px;
   left: 50%;
   transform: translateX(-50%);
   background: rgba(20, 15, 30, 0.95);
@@ -953,5 +973,7 @@ canvas#gameCanvas {
   .modal-title { font-size: 13px; }
   .game-btn { font-size: 8px; padding: 8px 12px; }
   .cards-grid { grid-template-columns: 1fr; }
-  .hud-top-row { flex-wrap: wrap; }
+  .inv-slot { width: 28px; height: 28px; font-size: 14px; }
+  .hud-bottom-panel { bottom: 6px; gap: 4px; }
+  .hp-bar-container { width: 135px; height: 18px; }
 }
