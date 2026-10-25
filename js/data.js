@@ -173,21 +173,21 @@
 
   /* ---------------------------------------------------------------- Egges: jeder spawnt mit einem anderen Kiff-Gegenstand */
   const EGGES = {
-    joint:       { name: 'Joint-Egge',       item: 'joint',     unlock: 1, hp: 5,  speed: 58,  dmg: 5,  xp: 1, r: 11, scale: 1,    ai: 'chase', death: 'smoke',  desc: 'Hinterlässt eine Rauchwolke, die Egges lahmlegt.' },
-    papers:      { name: 'Blättchen-Egge',   item: 'papers',    unlock: 1, hp: 3,  speed: 98,  dmg: 3,  xp: 1, r: 9,  scale: 0.85, ai: 'chase', desc: 'Dünn und flink.' },
-    leaf:        { name: 'Hanf-Egge',        item: 'leaf',      unlock: 1, hp: 7,  speed: 50,  dmg: 4,  xp: 1, r: 11, scale: 1,    ai: 'chase', regen: 0.05, death: 'heal', desc: 'Regeneriert. Lässt manchmal ein Hühnchen fallen.' },
-    grinder:     { name: 'Grinder-Egge',     item: 'grinder',   unlock: 2, hp: 12, speed: 50,  dmg: 6,  xp: 2, r: 12, scale: 1.05, ai: 'chase', death: 'split', desc: 'Zerfällt in zwei Mini-Egges.' },
-    sprinter:    { name: 'Pillen-Egge',      item: 'pills',     unlock: 2, hp: 10, speed: 112, dmg: 5,  xp: 2, r: 10, scale: 0.95, ai: 'chase', desc: 'Turboschneller Flitzer, der direkt auf dich zurennt.' },
-    bong:        { name: 'Bong-Egge',        item: 'bong',      unlock: 2, hp: 30, speed: 34,  dmg: 8,  xp: 3, r: 16, scale: 1.4,  ai: 'chase', death: 'puddle', desc: 'Dick und zäh. Hinterlässt rutschiges Bongwasser.' },
-    lighter:     { name: 'Feuerzeug-Egge',   item: 'lighter',   unlock: 3, hp: 9,  speed: 42,  dmg: 4,  xp: 2, r: 11, scale: 1,    ai: 'shooter', range: 190, shootCd: 2.8, desc: 'Schnipst Flammen aus der Ferne.' },
-    shield_egge: { name: 'Kofferraum-Egge',  item: 'shield',    unlock: 3, hp: 28, speed: 42,  dmg: 7,  xp: 3, r: 14, scale: 1.25, ai: 'chase', desc: 'Hält eine Autotür als Schutzschild vor sich.' },
-    pipe:        { name: 'Pfeifen-Egge',     item: 'pipe',      unlock: 3, hp: 11, speed: 46,  dmg: 4,  xp: 2, r: 11, scale: 1,    ai: 'chase', aura: true, desc: 'Macht Egges in der Nähe schneller.' },
-    vape:        { name: 'Vape-Egge',        item: 'vape',      unlock: 4, hp: 10, speed: 52,  dmg: 6,  xp: 2, r: 11, scale: 1,    ai: 'dasher', desc: 'Dasht in Nebelschwaden auf dich zu.' },
-    bomber:      { name: 'Böller-Egge',      item: 'firework',  unlock: 4, hp: 13, speed: 84,  dmg: 14, xp: 3, r: 11, scale: 1.05, ai: 'bomber', death: 'boom', desc: 'Trägt Sylvesterböller: Explodiert bei Annäherung!' },
-    sniper:      { name: 'Schleuder-Egge',   item: 'slingshot', unlock: 4, hp: 12, speed: 45,  dmg: 6,  xp: 3, r: 11, scale: 1,    ai: 'shooter', range: 240, shootCd: 2.2, desc: 'Schießt gezielt mit Steinschleudern aus der Ferne.' },
-    cake:        { name: 'Keks-Egge',        item: 'cake',      unlock: 4, hp: 22, speed: 30,  dmg: 6,  xp: 6, r: 13, scale: 1.2,  ai: 'chase', shells: 2, desc: 'Space-Cake: langsam, aber dicke XP-Beute.' },
-    bruiser:     { name: 'Türsteher-Egge',   item: 'bouncer',   unlock: 5, hp: 60, speed: 38,  dmg: 12, xp: 5, r: 18, scale: 1.5,  ai: 'chase', desc: 'Massiver Muskel-Egge: Widersteht fast jedem Rückstoß.' },
-    stash:       { name: 'Dosen-Egge',       item: 'stash',     unlock: 5, hp: 14, speed: 78,  dmg: 0,  xp: 4, r: 11, scale: 1,    ai: 'flee', shells: 6, desc: 'Rennt mit dem Vorrat weg. Fang sie!' },
+    joint:       { name: 'Joint-Egge',       item: 'joint',     unlock: 1, hp: 5,  speed: 65,  dmg: 7,  xp: 1, r: 11, scale: 1,    ai: 'chase', death: 'smoke',  desc: 'Hinterlässt eine Rauchwolke, die Egges lahmlegt.' },
+    papers:      { name: 'Blättchen-Egge',   item: 'papers',    unlock: 1, hp: 4,  speed: 105, dmg: 5,  xp: 1, r: 9,  scale: 0.85, ai: 'chase', desc: 'Dünn und flink.' },
+    leaf:        { name: 'Hanf-Egge',        item: 'leaf',      unlock: 1, hp: 8,  speed: 55,  dmg: 6,  xp: 1, r: 11, scale: 1,    ai: 'chase', regen: 0.05, death: 'heal', desc: 'Regeneriert. Lässt manchmal ein Hühnchen fallen.' },
+    grinder:     { name: 'Grinder-Egge',     item: 'grinder',   unlock: 2, hp: 14, speed: 58,  dmg: 9,  xp: 2, r: 12, scale: 1.05, ai: 'chase', death: 'split', desc: 'Zerfällt in zwei Mini-Egges.' },
+    sprinter:    { name: 'Pillen-Egge',      item: 'pills',     unlock: 2, hp: 12, speed: 120, dmg: 7,  xp: 2, r: 10, scale: 0.95, ai: 'chase', desc: 'Turboschneller Flitzer, der direkt auf dich zurennt.' },
+    bong:        { name: 'Bong-Egge',        item: 'bong',      unlock: 2, hp: 36, speed: 40,  dmg: 12, xp: 3, r: 16, scale: 1.4,  ai: 'chase', death: 'puddle', desc: 'Dick und zäh. Hinterlässt rutschiges Bongwasser.' },
+    lighter:     { name: 'Feuerzeug-Egge',   item: 'lighter',   unlock: 3, hp: 11, speed: 48,  dmg: 7,  xp: 2, r: 11, scale: 1,    ai: 'shooter', range: 190, shootCd: 2.8, desc: 'Schnipst Flammen aus der Ferne.' },
+    shield_egge: { name: 'Kofferraum-Egge',  item: 'shield',    unlock: 3, hp: 32, speed: 48,  dmg: 10, xp: 3, r: 14, scale: 1.25, ai: 'chase', desc: 'Hält eine Autotür als Schutzschild vor sich.' },
+    pipe:        { name: 'Pfeifen-Egge',     item: 'pipe',      unlock: 3, hp: 13, speed: 52,  dmg: 7,  xp: 2, r: 11, scale: 1,    ai: 'chase', aura: true, desc: 'Macht Egges in der Nähe schneller.' },
+    vape:        { name: 'Vape-Egge',        item: 'vape',      unlock: 4, hp: 12, speed: 58,  dmg: 9,  xp: 2, r: 11, scale: 1,    ai: 'dasher', desc: 'Dasht in Nebelschwaden auf dich zu.' },
+    bomber:      { name: 'Böller-Egge',      item: 'firework',  unlock: 4, hp: 14, speed: 90,  dmg: 18, xp: 3, r: 11, scale: 1.05, ai: 'bomber', death: 'boom', desc: 'Trägt Sylvesterböller: Explodiert bei Annäherung!' },
+    sniper:      { name: 'Schleuder-Egge',   item: 'slingshot', unlock: 4, hp: 14, speed: 50,  dmg: 8,  xp: 3, r: 11, scale: 1,    ai: 'shooter', range: 240, shootCd: 2.2, desc: 'Schießt gezielt mit Steinschleudern aus der Ferne.' },
+    cake:        { name: 'Keks-Egge',        item: 'cake',      unlock: 4, hp: 26, speed: 36,  dmg: 8,  xp: 6, r: 13, scale: 1.2,  ai: 'chase', shells: 2, desc: 'Space-Cake: langsam, aber dicke XP-Beute.' },
+    bruiser:     { name: 'Türsteher-Egge',   item: 'bouncer',   unlock: 5, hp: 70, speed: 44,  dmg: 16, xp: 5, r: 18, scale: 1.5,  ai: 'chase', desc: 'Massiver Muskel-Egge: Widersteht fast jedem Rückstoß.' },
+    stash:       { name: 'Dosen-Egge',       item: 'stash',     unlock: 5, hp: 16, speed: 85,  dmg: 0,  xp: 4, r: 11, scale: 1,    ai: 'flee', shells: 6, desc: 'Rennt mit dem Vorrat weg. Fang sie!' },
   };
 
   /* ---------------------------------------------------------------- Perks (Ordnungsdienst & Einsatz-Perks, mit Vor- & Nachteil) */
@@ -227,24 +227,24 @@
   const NODES = [
     // Muskeln
     { id: 'm1', br: 'muskeln', name: 'Hammerhände', icon: '✊', max: 5, cost: [12, 1.5], req: null, d: 'Schaden', fmt: l => `+${5 * l}% Schaden`, apply(s, l) { s.might *= 1 + 0.05 * l; } },
-    { id: 'm2', br: 'muskeln', name: 'Schnellschläger', icon: '⚡', max: 5, cost: [20, 1.5], req: 'm1', d: 'Abklingzeit', fmt: l => `-${4 * l}% Abklingzeit`, apply(s, l) { s.cd *= Math.pow(0.96, l); } },
-    { id: 'm3', br: 'muskeln', name: 'Treffsicher', icon: '🎯', max: 5, cost: [30, 1.55], req: 'm2', d: 'Krit-Chance', fmt: l => `+${3 * l}% Krit-Chance`, apply(s, l) { s.crit += 0.03 * l; } },
-    { id: 'm4', br: 'muskeln', name: 'Krit-Wucht', icon: '💥', max: 5, cost: [45, 1.55], req: 'm3', d: 'Krit-Schaden', fmt: l => `+${15 * l}% Krit-Schaden`, apply(s, l) { s.critMul += 0.15 * l; } },
-    { id: 'm5', br: 'muskeln', name: 'Wuchtbrumme', icon: '🔆', max: 5, cost: [35, 1.55], req: 'm2', d: 'Fläche', fmt: l => `+${5 * l}% Fläche`, apply(s, l) { s.area *= 1 + 0.05 * l; } },
+    { id: 'm2', br: 'muskeln', name: 'Schnellschläger', icon: '⚡', max: 5, cost: [20, 1.5], req: 'm1', d: 'Abklingzeit', fmt: l => `-${6 * l}% Abklingzeit`, apply(s, l) { s.cd *= Math.pow(0.94, l); } },
+    { id: 'm3', br: 'muskeln', name: 'Treffsicher', icon: '🎯', max: 5, cost: [30, 1.55], req: 'm2', d: 'Krit-Chance', fmt: l => `+${4 * l}% Krit-Chance`, apply(s, l) { s.crit += 0.04 * l; } },
+    { id: 'm4', br: 'muskeln', name: 'Krit-Wucht', icon: '💥', max: 5, cost: [45, 1.55], req: 'm3', d: 'Krit-Schaden', fmt: l => `+${25 * l}% Krit-Schaden`, apply(s, l) { s.critMul += 0.25 * l; } },
+    { id: 'm5', br: 'muskeln', name: 'Wuchtbrumme', icon: '🔆', max: 5, cost: [35, 1.55], req: 'm2', d: 'Fläche', fmt: l => `+${8 * l}% Fläche`, apply(s, l) { s.area *= 1 + 0.08 * l; } },
     { id: 'me', br: 'muskeln', name: 'Ewiger Schaden', icon: '♾️', max: INF, cost: [400, 1.22], req: 'm4', d: 'Schaden', fmt: l => `+${l}% Schaden`, apply(s, l) { s.might *= 1 + 0.01 * l; }, eternal: true },
 
     // Speck
     { id: 's1', br: 'speck', name: 'Dicker Pulli', icon: '🧥', max: 5, cost: [12, 1.5], req: null, d: 'Max-HP', fmt: l => `+${10 * l} Max-HP`, apply(s, l) { s.maxHp += 10 * l; } },
-    { id: 's2', br: 'speck', name: 'Mampfen', icon: '🍖', max: 5, cost: [20, 1.5], req: 's1', d: 'Regeneration', fmt: l => `+${(0.15 * l).toFixed(2)} HP/Sek`, apply(s, l) { s.regen += 0.15 * l; } },
-    { id: 's3', br: 'speck', name: 'Dickes Fell', icon: '🦔', max: 3, cost: [60, 2.0], req: 's2', d: 'Rüstung', fmt: l => `-${l} Schaden pro Treffer`, apply(s, l) { s.armor += l; } },
+    { id: 's2', br: 'speck', name: 'Mampfen', icon: '🍖', max: 5, cost: [20, 1.5], req: 's1', d: 'Regeneration', fmt: l => `+${(0.25 * l).toFixed(2)} HP/Sek`, apply(s, l) { s.regen += 0.25 * l; } },
+    { id: 's3', br: 'speck', name: 'Dickes Fell', icon: '🦔', max: 3, cost: [60, 2.0], req: 's2', d: 'Rüstung', fmt: l => `-${(1.5 * l).toFixed(1)} Schaden pro Treffer`, apply(s, l) { s.armor += 1.5 * l; } },
     { id: 's4', br: 'speck', name: 'Stehaufmännchen', icon: '🪆', max: 1, cost: [500, 1], req: 's3', d: 'Wiederbelebung', fmt: l => `+${l} Wiederbelebung`, apply(s, l) { s.revives += l; } },
-    { id: 's5', br: 'speck', name: 'Flinke Füße', icon: '👟', max: 5, cost: [30, 1.5], req: 's1', d: 'Lauftempo', fmt: l => `+${3 * l}% Lauftempo`, apply(s, l) { s.speed *= 1 + 0.03 * l; } },
-    { id: 'se', br: 'speck', name: 'Ewige Zähigkeit', icon: '♾️', max: INF, cost: [400, 1.22], req: 's4', d: 'Max-HP', fmt: l => `+${2 * l} Max-HP`, apply(s, l) { s.maxHp += 2 * l; }, eternal: true },
+    { id: 's5', br: 'speck', name: 'Flinke Füße', icon: '👟', max: 5, cost: [30, 1.5], req: 's1', d: 'Lauftempo', fmt: l => `+${4 * l}% Lauftempo`, apply(s, l) { s.speed *= 1 + 0.04 * l; } },
+    { id: 'se', br: 'speck', name: 'Ewige Zähigkeit', icon: '♾️', max: INF, cost: [400, 1.22], req: 's4', d: 'Max-HP', fmt: l => `+${3 * l} Max-HP`, apply(s, l) { s.maxHp += 3 * l; }, eternal: true },
 
     // Glück & Kram
-    { id: 'g1', br: 'glueck', name: 'Lernkurve', icon: '📚', max: 5, cost: [12, 1.5], req: null, d: 'XP', fmt: l => `+${5 * l}% XP`, apply(s, l) { s.xp *= 1 + 0.05 * l; } },
-    { id: 'g2', br: 'glueck', name: 'Schalen-Sammler', icon: '🥚', max: 5, cost: [20, 1.55], req: 'g1', d: 'Eierschalen', fmt: l => `+${8 * l}% Eierschalen`, apply(s, l) { s.shell *= 1 + 0.08 * l; } },
-    { id: 'g3', br: 'glueck', name: 'Magnet-Hose', icon: '🧲', max: 5, cost: [25, 1.5], req: 'g1', d: 'Einsammel-Radius', fmt: l => `+${10 * l}% Radius`, apply(s, l) { s.pickup *= 1 + 0.1 * l; } },
+    { id: 'g1', br: 'glueck', name: 'Lernkurve', icon: '📚', max: 5, cost: [12, 1.5], req: null, d: 'XP', fmt: l => `+${8 * l}% XP`, apply(s, l) { s.xp *= 1 + 0.08 * l; } },
+    { id: 'g2', br: 'glueck', name: 'Schalen-Sammler', icon: '🥚', max: 5, cost: [20, 1.55], req: 'g1', d: 'Eierschalen', fmt: l => `+${12 * l}% Eierschalen`, apply(s, l) { s.shell *= 1 + 0.12 * l; } },
+    { id: 'g3', br: 'glueck', name: 'Magnet-Hose', icon: '🧲', max: 5, cost: [25, 1.5], req: 'g1', d: 'Einsammel-Radius', fmt: l => `+${15 * l}% Radius`, apply(s, l) { s.pickup *= 1 + 0.15 * l; } },
     { id: 'g4', br: 'glueck', name: 'Neu würfeln', icon: '🎲', max: 3, cost: [80, 2.2], req: 'g2', d: 'Rerolls', fmt: l => `+${l} Reroll pro Run`, apply(s, l) { s.rerolls += l; } },
     { id: 'g5', br: 'glueck', name: 'Vorsprung', icon: '🚀', max: 3, cost: [150, 2.5], req: 'g4', d: 'Startlevel', fmt: l => `+${l} Startlevel`, apply(s, l) { s.startLevel += l; } },
     { id: 'ge', br: 'glueck', name: 'Ewiges Glück', icon: '♾️', max: INF, cost: [400, 1.22], req: 'g5', d: 'XP & Schalen', fmt: l => `+${(0.5 * l).toFixed(1)}% XP & Schalen`, apply(s, l) { s.xp *= 1 + 0.005 * l; s.shell *= 1 + 0.005 * l; }, eternal: true },
@@ -254,7 +254,7 @@
     { id: 'c2', br: 'chaos', name: 'Chaos-Start', icon: '🎁', max: 1, cost: [300, 1], req: 'c1', d: 'Zufallswaffe', fmt: l => 'Start mit einer Zufallswaffe', apply(s, l) { s.startRandom += l; } },
     { id: 'c3', br: 'chaos', name: 'Wutanfall', icon: '😡', max: 5, cost: [40, 1.55], req: 'c1', d: 'Berserker', fmt: l => `+${8 * l}% Schaden unter 40% HP`, apply(s, l) { s.berserk += 0.08 * l; } },
     { id: 'c4', br: 'chaos', name: 'Mutation', icon: '🧬', max: 5, cost: [60, 1.6], req: 'c3', d: 'Wunder-Upgrade', fmt: l => `${4 * l}% Chance auf Doppel-Upgrade`, apply(s, l) { s.wonderUp += 0.04 * l; } },
-    { id: 'c5', br: 'chaos', name: 'Platzende Egges', icon: '🎆', max: 5, cost: [50, 1.6], req: 'c1', d: 'Explosion', fmt: l => `${3 * l}% Chance: Kill explodiert`, apply(s, l) { s.explode += 0.03 * l; } },
+    { id: 'c5', br: 'chaos', name: 'Platzende Egges', icon: '🎆', max: 5, cost: [50, 1.6], req: 'c1', d: 'Explosion', fmt: l => `${5 * l}% Chance: Kill explodiert`, apply(s, l) { s.explode += 0.05 * l; } },
     { id: 'ce', br: 'chaos', name: 'Ewiges Chaos', icon: '♾️', max: INF, cost: [400, 1.22], req: 'c4', d: 'Chaos', fmt: l => `+${(0.4 * l).toFixed(1)}% Explosion, +${(0.5 * l).toFixed(1)}% Schaden`, apply(s, l) { s.explode = Math.min(0.6, s.explode + 0.004 * l); s.might *= 1 + 0.005 * l; }, eternal: true },
   ];
 

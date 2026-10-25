@@ -61,6 +61,8 @@ ok(g.player.hp < initialHp, `Anti-camping mortar dealt damage to standing player
 ok(g.zones.some(z => z.kind === 'puddle'), 'Anti-camping mortar left burning hazard on ground!');
 
 // 5. Test new floor pickups (magnet, bomb, coffee)
+g.enemies = [];
+g.player.hp = 100;
 g.pickups.push({ kind: 'magnet', x: 0, y: 0, v: 1, life: 10 });
 g.update(1 / 60);
 ok(g.gems.every(gm => gm.mag), 'Magnet vacuumed ALL gems on map!');

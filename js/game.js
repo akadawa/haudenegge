@@ -112,13 +112,19 @@
       const t = clamp(this.stageTime / C.STAGE_LEN, 0, 1.5);
       const s = this.stats;
       const lvl = Math.max(1, this.level || 1);
-      // Skalierung mit Level & Stage damit Endgame-Runs fordernd bleiben
-      const lvlHp = 1 + (lvl - 1) * 0.08 + Math.pow(Math.max(0, lvl - 6) / 7, 1.7) * 0.45;
-      const stHp = Math.pow(1.24, Math.min(st, 120)) * (1 + 0.05 * Math.max(0, st - 120)) * (1 + 0.65 * t);
-      const speedScale = Math.min(1 + 0.02 * st, 1.45) * s.enemySpeed;
+      // Level-Skalierung: Mit jedem Level-Up skaliert die Horden-HP progressiv mit
+      const lvlHp = 1 + (lvl - 1) * 0.09 + Math.pow(Math.max(0, lvl - 5) / 6, 1.85) * 0.55;
+      // Stage-Skalierung: Sanfter Start in Stage 1, spürbare Steigerung in Stage 2+
+      const stBase = Math.pow(1.5, Math.min(st, 15)) * Math.pow(1.15, Math.max(0, Math.min(st - 15, 100)));
+      const timeHp = 1 + 0.7 * t;
+      const hp = stBase * timeHp * lvlHp * s.enemyHp;
+      // Schaden skaliert mit Stage & Level
+      const dmg = (1 + 0.25 * st + (lvl - 1) * 0.04) * (1 + 0.3 * t);
+      // Tempo skaliert dynamisch (bleibt immer unter 1.45 * 1.2 für Test-Invariante)
+      const speedScale = Math.min(1 + 0.035 * st + (lvl - 1) * 0.005, 1.45) * s.enemySpeed;
       return {
-        hp: stHp * lvlHp * s.enemyHp,
-        dmg: (1 + 0.1 * st + (lvl - 1) * 0.035) * (1 + 0.25 * t),
+        hp,
+        dmg,
         speed: speedScale,
         xp: 1 + 0.12 * st + (lvl - 1) * 0.03,
       };
@@ -681,12 +687,12 @@
       e.elite = false;
       e.r = mega ? 48 : 36;
       e.scale = mega ? 3.6 : 2.6;
-      const lvlMul = 1 + ((this.level || 1) - 1) * 0.08;
-      e.hp = 2200 * Math.pow(1.3, Math.min(st, 120)) * lvlMul * (mega ? 3.5 : 1) * this.stats.bossHp;
+      const lvlMul = 1 + ((this.level || 1) - 1) * 0.09;
+      e.hp = 2400 * Math.pow(1.36, Math.min(st, 120)) * lvlMul * (mega ? 3.5 : 1) * this.stats.bossHp;
       e.maxHp = e.hp;
-      e.speed = 52 * Math.min(1 + 0.015 * st, 1.4);
-      e.dmg = 15 * sc.dmg;
-      e.xp = 35 * sc.xp;
+      e.speed = 54 * Math.min(1 + 0.02 * st, 1.45);
+      e.dmg = 16 * sc.dmg;
+      e.xp = 40 * sc.xp;
       e.stoner = false; e.timid = false;
       const all = ['dash', 'shock', 'summon', 'spray'];
       if (mega) e.patterns = all.slice();
@@ -695,7 +701,7 @@
         rr.shuffle(all);
         e.patterns = all.slice(0, 2);
       }
-      e.pi = 0; e.bstate = 'move'; e.bt = 2.0; e.bphase = 0; e.wave = 0; e.enraged = false;
+      e.pi = 0; e.bstate = 'move'; e.bt = 1.8; e.bphase = 0; e.wave = 0; e.enraged = false;
       this.boss = e;
       this.sfx('boss');
       if (this.cb.boss) this.cb.boss({ name, mega, stage });
@@ -704,28 +710,32 @@
 
     /* ------------------------------------------------------------ Spawner */
     updateSpawner(dt) {
-      const st = this.stage, s = this.stats;
-      const rate = (2.0 + 0.045 * this.stageTime + 0.035 * (this.level || 1)) * (1 + 0.18 * (st - 1)) * s.enemyCount * (this.boss ? 0.6 : 1);
+      const st = this.stage - 1, s = this.stats;
+      // Sanfter Einstieg in den ersten 30s von Stage 1, danach spürbarer Horden-Druck
+      const baseRate = 1.8 + 0.8 * Math.min(st, 10);
+      const timeRamp = (this.stageTime / C.STAGE_LEN) * (2.2 + 0.7 * st);
+      const lvlBonus = 0.04 * (this.level || 1);
+      const rate = (baseRate + timeRamp + lvlBonus) * s.enemyCount * (this.boss ? 0.65 : 1);
       this.spawnAcc += rate * dt;
-      const cap = Math.min(80 + 30 * st + (this.level || 1) * 3, 400) * Math.min(1.3, s.enemyCount);
+      const cap = Math.min(85 + 35 * st + (this.level || 1) * 3, 420) * Math.min(1.3, s.enemyCount);
       while (this.spawnAcc >= 1) {
         this.spawnAcc -= 1;
         if (this.enemies.length < cap) this.spawnRegular();
       }
-      // Horden-Ringe
-      if (st >= 2 && !this.boss) {
-        for (const t of [40, 85]) {
-          const k = st + ':' + t;
-          if (this.stageTime >= t && !this.hordeDone[k]) {
-            this.hordeDone[k] = true;
-            const n = Math.min(14 + 3 * st, 44);
-            const R = Math.hypot(this.viewW, this.viewH) / 2 + 40;
-            for (let i = 0; i < n; i++) {
-              const a = (i / n) * TAU;
-              this.spawnRegular({ pos: { x: this.player.x + Math.cos(a) * R, y: this.player.y + Math.sin(a) * R }, elite: false });
-            }
-            this.toast('Egge-Horde!');
+      // Horden-Ringe: Jetzt auch in Stage 1 bei 45s und 95s!
+      const hordeTimes = st === 0 ? [45, 95] : [30, 65, 95];
+      for (const t of hordeTimes) {
+        const k = this.stage + ':' + t;
+        if (this.stageTime >= t && !this.hordeDone[k]) {
+          this.hordeDone[k] = true;
+          const n = Math.min(15 + 5 * st, 44);
+          const R = Math.hypot(this.viewW, this.viewH) / 2 + 45;
+          for (let i = 0; i < n; i++) {
+            const a = (i / n) * TAU;
+            this.spawnRegular({ pos: { x: this.player.x + Math.cos(a) * R, y: this.player.y + Math.sin(a) * R }, elite: false });
           }
+          this.toast('⚠️ EGGE-HORDE STÜRMT AN!');
+          this.sfx('siren');
         }
       }
     }
