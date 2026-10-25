@@ -1494,8 +1494,8 @@
       if (this.headless) return;
       if (this.floaters.length >= MAX_FLOATERS && !crit) return;
       if (this.floaters.length >= MAX_FLOATERS + 15) return;
-      const txt = (crit ? '' : '') + fmtNum(Math.max(1, Math.round(v)));
-      this.floaters.push({ x: x + this.rng.range(-6, 6), y, text: txt, t: 0, crit, color: color || (crit ? '#ffe14a' : '#ffffff') });
+      const txt = fmtNum(Math.max(1, Math.round(v))) + (crit ? '!' : '');
+      this.floaters.push({ x: x + this.rng.range(-6, 6), y, text: txt, t: 0, crit, color: color || (crit ? '#ff2a4b' : '#ffe600') });
     }
 
     particle(x, y, color) {

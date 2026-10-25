@@ -36,11 +36,21 @@
       const h = this.canvas.height;
       const p = game.player;
 
+      // Leinwand sauber leeren
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.fillStyle = '#121016';
+      ctx.fillRect(0, 0, w, h);
+
       // Kamera sanft nachführen + Screen-Shake
       const targetCamX = p.x;
       const targetCamY = p.y;
-      this.camX += (targetCamX - this.camX) * 0.2;
-      this.camY += (targetCamY - this.camY) * 0.2;
+      if (Math.hypot(targetCamX - this.camX, targetCamY - this.camY) > 600) {
+        this.camX = targetCamX;
+        this.camY = targetCamY;
+      } else {
+        this.camX += (targetCamX - this.camX) * 0.2;
+        this.camY += (targetCamY - this.camY) * 0.2;
+      }
 
       let shakeX = 0, shakeY = 0;
       if (game.shake > 0.01) {
@@ -72,6 +82,16 @@
 
       ctx.fillStyle = pat;
       ctx.fillRect(left - 32, top - 32, (right - left) + 64, (bottom - top) + 64);
+
+      // Jahrmarkt-Zentralmedaillon & Zirkus-Wimpel
+      if (biomeIdx === 0 && Sprites.drawCenterMedallion) {
+        if (right > -250 && left < 250 && bottom > -250 && top < 250) {
+          Sprites.drawCenterMedallion(ctx, 0, 0, game.time);
+        }
+        if (Sprites.drawBunting) {
+          Sprites.drawBunting(ctx, game.time);
+        }
+      }
 
       // Grasflecken (Weed Spots)
       this.renderGrassPatches(ctx, game, left, top, right, bottom);
@@ -199,21 +219,45 @@
     renderPickups(ctx, game) {
       const t = game.time;
 
-      // XP-Gems
+      // Facettierte XP-Gems mit Leuchtkreis auf dem Boden
+      const gemSprites = Sprites.gems;
       for (const g of game.gems) {
         const bob = Math.sin(t * 6 + g.x) * 2;
-        ctx.save();
-        ctx.fillStyle = g.v >= 10 ? '#4fe8ff' : g.v >= 3 ? '#ffe14a' : '#4fc760';
-        ctx.beginPath();
-        // Kristall-Form (Raute)
-        const size = g.v >= 10 ? 6 : g.v >= 3 ? 5 : 4;
-        ctx.moveTo(g.x, g.y - size + bob);
-        ctx.lineTo(g.x + size * 0.7, g.y + bob);
-        ctx.lineTo(g.x, g.y + size + bob);
-        ctx.lineTo(g.x - size * 0.7, g.y + bob);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
+        const gem = gemSprites ? (g.v >= 25 ? gemSprites.purple : g.v >= 10 ? gemSprites.gold : g.v >= 3 ? gemSprites.blue : gemSprites.green) : null;
+        if (gem) {
+          ctx.save();
+          // Weicher farbiger Leucht-Halo auf den Holzplanken
+          const glowGrad = ctx.createRadialGradient(g.x, g.y + bob, 1, g.x, g.y + bob, 14);
+          glowGrad.addColorStop(0, gem.glow);
+          glowGrad.addColorStop(1, 'rgba(0,0,0,0)');
+          ctx.fillStyle = glowGrad;
+          ctx.beginPath();
+          ctx.arc(g.x, g.y + bob, 14, 0, TAU);
+          ctx.fill();
+
+          // Kristall-Sprite
+          ctx.drawImage(gem.sprite, g.x - 7, g.y + bob - 8);
+
+          // Kleiner funkelnder Stern-Glanzpunkt
+          if (Math.sin(t * 8 + g.x * 2) > 0.6) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(g.x - 3, g.y + bob - 7, 2, 2);
+          }
+          ctx.restore();
+        } else {
+          // Fallback falls Sprite nicht geladen
+          ctx.save();
+          ctx.fillStyle = g.v >= 10 ? '#4fe8ff' : g.v >= 3 ? '#ffe14a' : '#4fc760';
+          ctx.beginPath();
+          const size = g.v >= 10 ? 6 : g.v >= 3 ? 5 : 4;
+          ctx.moveTo(g.x, g.y - size + bob);
+          ctx.lineTo(g.x + size * 0.7, g.y + bob);
+          ctx.lineTo(g.x, g.y + size + bob);
+          ctx.lineTo(g.x - size * 0.7, g.y + bob);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
       }
 
       // Eierschalen, Hühnchen & Truhen
@@ -255,7 +299,7 @@
         ctx.scale(flip, 1);
 
         // Skalierung je nach Egge-Größe (Boss / Elite / Normal)
-        const baseScale = e.boss ? (e.mega ? 4.2 : 3.2) : e.scale * 1.5;
+        const baseScale = e.boss ? (e.mega ? 2.8 : 2.2) : e.scale * 1.25;
         const bob = Math.sin(e.anim * 8) * 1.5;
 
         // Status: Chillen im Gras -> Grünes Wölkchen & friedlicher Bob
@@ -265,11 +309,11 @@
 
         // Sprite auswählen (Normal / Gold / Boss)
         const variant = e.boss ? 'boss' : e.elite ? 'gold' : 'normal';
-        const frames = Sprites.egge[variant] || Sprites.egge.normal;
+        const frames = (e.boss && Sprites.boss && Sprites.boss.length) ? Sprites.boss : (Sprites.egge[variant] || Sprites.egge.normal);
         const frameIdx = Math.floor(e.anim * 6) % 2;
         let sprite = frames[frameIdx] || frames[0];
 
-        // Treffer-Blitz (Weiß / Rot)
+        // Treffer-Blitz (Weiß / Rot / Grün)
         if (e.flash > 0) {
           sprite = Sprites.flash(sprite, '#ffffff');
         } else if (e.chill > 0) {
@@ -278,17 +322,17 @@
           sprite = Sprites.flash(sprite, '#ff8a3a');
         }
 
-        const sw = 16 * baseScale;
-        const sh = 19 * baseScale;
+        const sw = sprite.width * baseScale;
+        const sh = sprite.height * baseScale;
         ctx.drawImage(sprite, -sw / 2, -sh / 2 + bob, sw, sh);
 
         // Der Egge hält seinen Kiff-Gegenstand in der Hand!
         const itemKey = e.def ? e.def.item : 'joint';
         const itemSprite = Sprites.items[itemKey];
         if (itemSprite) {
-          const isw = 12 * Math.min(baseScale, 2.2);
-          const ish = 12 * Math.min(baseScale, 2.2);
-          ctx.drawImage(itemSprite, sw * 0.15, -ish * 0.2 + bob, isw, ish);
+          const isw = 14 * Math.min(baseScale, 2.0);
+          const ish = 14 * Math.min(baseScale, 2.0);
+          ctx.drawImage(itemSprite, sw * 0.18, -ish * 0.15 + bob, isw, ish);
         }
 
         // Status-Symbole (Betäubt, brennend)
@@ -298,14 +342,14 @@
 
         // Lebensbalken über Elite & Boss-Egges
         if (e.boss || e.elite) {
-          const hpW = e.boss ? 70 : 32;
-          const hpH = e.boss ? 6 : 4;
+          const hpW = e.boss ? 80 : 36;
+          const hpH = e.boss ? 7 : 4;
           const hpFrac = Math.max(0, e.hp / e.maxHp);
           ctx.scale(flip, 1); // Balken nicht spiegeln
-          ctx.fillStyle = 'rgba(0,0,0,0.7)';
-          ctx.fillRect(-hpW / 2 - 1, -sh / 2 - 12, hpW + 2, hpH + 2);
+          ctx.fillStyle = 'rgba(0,0,0,0.85)';
+          ctx.fillRect(-hpW / 2 - 1, -sh / 2 - 14, hpW + 2, hpH + 2);
           ctx.fillStyle = e.boss ? (e.enraged ? '#ff2a2a' : '#ff7a2a') : '#ffe14a';
-          ctx.fillRect(-hpW / 2, -sh / 2 - 11, hpW * hpFrac, hpH);
+          ctx.fillRect(-hpW / 2, -sh / 2 - 13, hpW * hpFrac, hpH);
         }
 
         ctx.restore();
@@ -337,9 +381,9 @@
         sprite = Sprites.flash(sprite, '#ff4a4a');
       }
 
-      const scale = 2.0;
-      const sw = 16 * scale;
-      const sh = 19 * scale;
+      const scale = 1.45;
+      const sw = sprite.width * scale;
+      const sh = sprite.height * scale;
       const bob = p.moving ? Math.sin(p.anim * 8) * 1.5 : 0;
       ctx.drawImage(sprite, -sw / 2, -sh / 2 + bob, sw, sh);
 
@@ -402,10 +446,29 @@
         ctx.restore();
       }
 
-      // 2. Orbit-Schlagstöcke
+      // 2. Orbit-Schlagstöcke mit dynamischen Schwung-Schweifen
       const baton = game.getWeapon('baton');
       if (baton && baton.pos) {
         for (const pos of baton.pos) {
+          // Dynamischer Schwung-Schweif (Swoosh Arc)
+          const orbitR = Math.hypot(pos.x - p.x, pos.y - p.y);
+          if (orbitR > 10) {
+            ctx.save();
+            ctx.lineWidth = 3.5;
+            const swooshGrad = ctx.createLinearGradient(
+              pos.x - Math.cos(pos.a) * 35, pos.y - Math.sin(pos.a) * 35,
+              pos.x, pos.y
+            );
+            swooshGrad.addColorStop(0, 'rgba(255, 235, 120, 0)');
+            swooshGrad.addColorStop(0.7, 'rgba(255, 245, 180, 0.55)');
+            swooshGrad.addColorStop(1, 'rgba(255, 255, 255, 0.95)');
+            ctx.strokeStyle = swooshGrad;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, orbitR, pos.a - 0.55, pos.a);
+            ctx.stroke();
+            ctx.restore();
+          }
+
           ctx.save();
           ctx.translate(pos.x, pos.y);
           ctx.rotate(pos.a + Math.PI / 2);
@@ -542,18 +605,22 @@
       }
     }
 
-    /* ------------------------------------------------------------ Schadenszahlen */
+    /* ------------------------------------------------------------ Schadenszahlen (Arcade Pixel Font mit dickem Umriss) */
     renderFloaters(ctx, game) {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       for (const fl of game.floaters) {
-        const alpha = Math.max(0, 1 - (fl.t / 0.7));
+        const alpha = Math.max(0, 1 - (fl.t / 0.75));
         ctx.save();
         ctx.globalAlpha = alpha;
-        ctx.font = fl.crit ? 'bold 15px "Courier New", monospace' : '12px "Courier New", monospace';
-        ctx.fillStyle = '#000000';
-        ctx.fillText(fl.text, fl.x + 1, fl.y + 1);
-        ctx.fillStyle = fl.color;
+        const isCrit = !!fl.crit;
+        ctx.font = isCrit ? '900 15px "Press Start 2P", monospace' : '700 11px "Press Start 2P", monospace';
+        ctx.lineWidth = isCrit ? 4 : 3;
+        ctx.lineJoin = 'miter';
+        ctx.miterLimit = 2;
+        ctx.strokeStyle = '#000000';
+        ctx.strokeText(fl.text, fl.x, fl.y);
+        ctx.fillStyle = isCrit ? '#ff2a4b' : (fl.color || '#ffe600');
         ctx.fillText(fl.text, fl.x, fl.y);
         ctx.restore();
       }
