@@ -179,7 +179,11 @@
     Sprites.init(photos, save.settings.photo === true);
 
     ui = new UI();
-    ui.onStartGame = (weapon) => startNewRun(weapon);
+    HDE.ui = ui;
+    ui.onStartGame = (weapon) => {
+      startNewRun(weapon);
+      HDE.game = game;
+    };
     ui.openStartScreen();
 
     requestAnimationFrame(gameLoop);

@@ -20,9 +20,36 @@
     }
   } catch (e) { storage = memStore; }
 
+  const DEFAULT_HIGHSCORES = [
+    { name: 'Egge-König', score: 25000, stage: 6, time: 720, kills: 1800, bossKills: 5, shells: 180, date: '25.10.2026' },
+    { name: 'Chiller-420', score: 18400, stage: 4, time: 540, kills: 1300, bossKills: 3, shells: 120, date: '24.10.2026' },
+    { name: 'Omelette-Master', score: 12200, stage: 3, time: 380, kills: 850, bossKills: 2, shells: 80, date: '23.10.2026' },
+    { name: 'Käse-Klaus', score: 7500, stage: 2, time: 240, kills: 480, bossKills: 1, shells: 45, date: '22.10.2026' },
+    { name: 'Noob-Egge', score: 3100, stage: 1, time: 110, kills: 180, bossKills: 0, shells: 15, date: '20.10.2026' },
+  ];
+
+  function calcScore(res) {
+    if (!res) return 0;
+    return Math.floor(
+      (res.kills || 0) * 10 +
+      (res.stage || 1) * 1200 +
+      (res.time || 0) * 4 +
+      (res.bossKills || 0) * 600 +
+      (res.shells || 0) * 5
+    );
+  }
+
+  function cleanName(n) {
+    if (typeof n !== 'string') return 'Kämpfer';
+    n = n.replace(/<[^>]*>/g, '').trim().slice(0, 16);
+    return n || 'Kämpfer';
+  }
+
   function defaults() {
     return {
       v: VERSION,
+      playerName: 'Kämpfer',
+      highscores: DEFAULT_HIGHSCORES.map(x => Object.assign({}, x)),
       shells: 0,            // aktuelle Währung
       totalShells: 0,       // insgesamt verdient
       bestStage: 0,         // höchste erreichte Stage
@@ -86,6 +113,21 @@
     // Perks dürfen die freigeschalteten Slots nicht überschreiten
     const slots = HDE.Meta ? HDE.Meta.slotsForStage(s.bestStage) : 0;
     if (HDE.Meta && s.perks.length > slots) s.perks.length = slots;
+
+    s.playerName = cleanName(raw.playerName);
+    if (Array.isArray(raw.highscores)) {
+      s.highscores = raw.highscores.map(h => ({
+        name: cleanName(h.name),
+        score: Math.floor(num(h.score, 0)),
+        stage: Math.floor(num(h.stage, 1, 1)),
+        time: Math.floor(num(h.time, 0)),
+        kills: Math.floor(num(h.kills, 0)),
+        bossKills: Math.floor(num(h.bossKills, 0)),
+        shells: Math.floor(num(h.shells, 0)),
+        date: typeof h.date === 'string' ? h.date.slice(0, 20) : '25.10.2026',
+      })).sort((a, b) => b.score - a.score).slice(0, 20);
+    }
+
     s.v = VERSION;
     return s;
   }
@@ -94,7 +136,33 @@
     VERSION,
     defaults,
     sanitize,
+    calcScore,
+    cleanName,
+    DEFAULT_HIGHSCORES,
     data: null,
+
+    /** Trägt ein neues Spielergebnis in die Bestenliste ein */
+    addHighscore(entry) {
+      if (!this.data) this.load();
+      const name = cleanName(entry.name || this.data.playerName);
+      this.data.playerName = name;
+      const record = {
+        name,
+        score: Math.floor(num(entry.score, calcScore(entry))),
+        stage: Math.floor(num(entry.stage, 1, 1)),
+        time: Math.floor(num(entry.time, 0)),
+        kills: Math.floor(num(entry.kills, 0)),
+        bossKills: Math.floor(num(entry.bossKills, 0)),
+        shells: Math.floor(num(entry.shells, 0)),
+        date: entry.date || (new Date()).toLocaleDateString('de-DE'),
+      };
+      this.data.highscores.push(record);
+      this.data.highscores.sort((a, b) => b.score - a.score);
+      if (this.data.highscores.length > 20) this.data.highscores.length = 20;
+      const rank = this.data.highscores.findIndex(h => h === record) + 1;
+      this.save();
+      return { rank, entry: record };
+    },
 
     load() {
       let raw = null;

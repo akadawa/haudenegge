@@ -167,6 +167,30 @@ test('Export/Import-Code Rundlauf und Fehlerfälle', () => {
   ok(!Save.importCode('quatsch').ok); ok(!Save.importCode('HDE1:%%%').ok); ok(!Save.importCode('').ok);
   eq(Save.data.shells, 1234, 'Fehlimport darf Stand nicht zerstören');
 });
+test('Highscores: Eintragen, Sortierung, Begrenzung, Namensbereinigung', () => {
+  Save.reset();
+  eq(Save.cleanName('  <b>Cooler Gamer</b>  '), 'Cooler Gamer');
+  eq(Save.cleanName('DiesIstEinSehrLangerNameDerGekuertztWerdenMuss'), 'DiesIstEinSehrLa');
+  eq(Save.cleanName('   '), 'Kämpfer');
+
+  const sc = Save.calcScore({ kills: 100, stage: 3, time: 200, bossKills: 2, shells: 50 });
+  eq(sc, 100 * 10 + 3 * 1200 + 200 * 4 + 2 * 600 + 50 * 5); // 1000 + 3600 + 800 + 1200 + 250 = 6850
+
+  const res1 = Save.addHighscore({ name: 'MegaPro', score: 999999, stage: 10, time: 600, kills: 2000, bossKills: 5, shells: 300 });
+  eq(res1.rank, 1);
+  eq(Save.data.highscores[0].name, 'MegaPro');
+  eq(Save.data.playerName, 'MegaPro');
+
+  const res2 = Save.addHighscore({ name: 'Zweiter', score: 500, stage: 1, time: 50, kills: 10 });
+  ok(res2.rank > 1);
+
+  // 30 Einträge hinzufügen -> Liste darf nie mehr als 20 Elemente haben
+  for (let i = 0; i < 30; i++) {
+    Save.addHighscore({ name: 'Bot' + i, score: 1000 + i * 10 });
+  }
+  eq(Save.data.highscores.length, 20);
+  ok(Save.data.highscores[0].score >= Save.data.highscores[1].score);
+});
 
 console.log('\n== Spiel ==');
 test('Spielstart: Startwaffe, Werte, freigeschaltete Waffen', () => {

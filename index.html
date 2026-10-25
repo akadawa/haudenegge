@@ -55,6 +55,7 @@
 
         <div class="btn-row" style="margin-top:12px;">
           <button id="btn-play" class="game-btn primary" style="font-size:12px; padding:12px 28px;">▶ SPIELEN</button>
+          <button id="btn-highscores" class="game-btn">🏆 HIGHSCORES</button>
           <button id="btn-skilltree" class="game-btn">🌳 SKILLTREE</button>
           <button id="btn-perks" class="game-btn">✨ PERKS</button>
           <button id="btn-settings" class="game-btn">⚙ EINSTELLUNGEN</button>
@@ -90,10 +91,55 @@
         <div id="death-unlocks" style="display:flex; flex-direction:column; gap:6px;"></div>
         <div id="death-stats" class="death-stats-grid"></div>
 
+        <!-- Highscore Eintragen Box -->
+        <div class="death-highscore-box">
+          <div class="highscore-score-line">
+            <span>DEIN SCORE:</span>
+            <span id="death-score-val" class="highlight-score">0</span>
+          </div>
+          <div class="highscore-input-row">
+            <input type="text" id="highscore-name-input" maxlength="16" placeholder="Dein Name" autocomplete="off" spellcheck="false">
+            <button id="btn-submit-highscore" class="game-btn primary">🏆 Eintragen</button>
+          </div>
+          <div id="highscore-status" class="highscore-status-msg"></div>
+        </div>
+
         <div class="btn-row" style="margin-top:8px;">
           <button id="btn-death-restart" class="game-btn primary">🔄 NOCHMAL SPIELEN</button>
+          <button id="btn-death-highscores" class="game-btn">🏆 HIGHSCORES</button>
           <button id="btn-death-tree" class="game-btn">🌳 SKILLTREE</button>
           <button id="btn-death-perks" class="game-btn">✨ PERKS</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Highscores Screen -->
+    <div id="highscores-screen" class="overlay-screen">
+      <div class="modal-box" style="max-width: 760px;">
+        <div class="modal-header">
+          <h2 class="modal-title">🏆 BESTENLISTE</h2>
+          <p class="modal-subtitle">Die legendärsten Egge-Klopper aller Zeiten</p>
+        </div>
+
+        <div class="highscores-table-container">
+          <table class="highscores-table">
+            <thead>
+              <tr>
+                <th style="width: 45px;">#</th>
+                <th>Name</th>
+                <th>Score</th>
+                <th>Stage</th>
+                <th>Kills</th>
+                <th>Zeit</th>
+                <th>Datum</th>
+              </tr>
+            </thead>
+            <tbody id="highscores-body"></tbody>
+          </table>
+        </div>
+
+        <div class="btn-row">
+          <button id="btn-highscores-back" class="game-btn primary">◀ ZURÜCK</button>
         </div>
       </div>
     </div>

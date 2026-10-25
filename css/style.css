@@ -668,6 +668,116 @@ canvas#gameCanvas {
   pointer-events: none;
 }
 
+/* ------------------------------------------------------------ Highscore & Bestenliste */
+.death-highscore-box {
+  background: rgba(30, 22, 44, 0.95);
+  border: 2px solid var(--accent-gold);
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.highscore-score-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 10px;
+}
+
+.highlight-score {
+  font-size: 15px;
+  color: var(--accent-gold);
+  text-shadow: 2px 2px 0 #000;
+}
+
+.highscore-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.highscore-input-row input {
+  flex: 1;
+  background: #181222;
+  border: 2px solid #5a4878;
+  border-radius: 4px;
+  padding: 8px 10px;
+  color: #fff;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 9px;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.highscore-input-row input:focus {
+  border-color: var(--accent-gold);
+}
+
+.highscore-status-msg {
+  font-size: 8px;
+  color: var(--accent-green);
+  min-height: 12px;
+  text-align: center;
+}
+
+.highscores-table-container {
+  max-height: 60vh;
+  overflow-y: auto;
+  border: 2px solid #3c3052;
+  border-radius: 6px;
+  background: rgba(18, 14, 26, 0.9);
+}
+
+.highscores-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 8px;
+  text-align: left;
+}
+
+.highscores-table th {
+  background: #281e3a;
+  color: var(--accent-gold);
+  padding: 10px 8px;
+  border-bottom: 2px solid #4a3868;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.highscores-table td {
+  padding: 8px;
+  border-bottom: 1px solid #2a2238;
+}
+
+.highscores-table tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.highscores-table tr:hover {
+  background: rgba(96, 56, 156, 0.2);
+}
+
+.highscores-table tr.current-entry {
+  background: rgba(255, 225, 74, 0.15);
+  border-left: 3px solid var(--accent-gold);
+}
+
+.rank-badge {
+  font-weight: bold;
+}
+
+.rank-1 { color: #ffe14a; text-shadow: 1px 1px 0 #000; }
+.rank-2 { color: #d0d8e8; text-shadow: 1px 1px 0 #000; }
+.rank-3 { color: #d88a4a; text-shadow: 1px 1px 0 #000; }
+
+.score-col {
+  color: var(--accent-gold);
+  font-weight: bold;
+}
+
 /* Toast Nachricht */
 #toast {
   position: absolute;

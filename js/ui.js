@@ -8,6 +8,7 @@
       this.game = null;
       this.save = Save.data || Save.load();
       this.selectedStartWeapon = this.save.lastWeapon || 'hammer';
+      this.lastRunResult = null;
 
       // DOM Referenzen
       this.dom = {
@@ -34,6 +35,13 @@
         skilltreeScreen: document.getElementById('skilltree-screen'),
         perksScreen: document.getElementById('perks-screen'),
         settingsScreen: document.getElementById('settings-screen'),
+        highscoresScreen: document.getElementById('highscores-screen'),
+        highscoresBody: document.getElementById('highscores-body'),
+        deathScoreVal: document.getElementById('death-score-val'),
+        highscoreNameInput: document.getElementById('highscore-name-input'),
+        submitHighscoreBtn: document.getElementById('btn-submit-highscore'),
+        highscoreStatus: document.getElementById('highscore-status'),
+        highscoresScreen: document.getElementById('highscores-screen'),
 
         // Level Up Cards
         levelCards: document.getElementById('level-cards'),
@@ -233,6 +241,89 @@
         const names = info.newWeapons.map(w => D.WEAPONS[w].name).join(', ');
         this.dom.deathUnlocks.innerHTML += `<div class="new-best-badge" style="background:#5a2a7a; border-color:#c058f8;">🔓 NEUE WAFFE: ${names}!</div>`;
       }
+
+      // Highscore Vorbereitung
+      const score = Save.calcScore(res);
+      this.lastRunResult = Object.assign({}, res, { score });
+      if (this.dom.deathScoreVal) {
+        this.dom.deathScoreVal.textContent = util.fmtNum(score);
+      }
+      if (this.dom.highscoreNameInput) {
+        this.dom.highscoreNameInput.value = this.save.playerName || 'Kämpfer';
+        this.dom.highscoreNameInput.disabled = false;
+      }
+      if (this.dom.submitHighscoreBtn) {
+        this.dom.submitHighscoreBtn.disabled = false;
+        this.dom.submitHighscoreBtn.textContent = '🏆 Eintragen';
+      }
+      if (this.dom.highscoreStatus) {
+        this.dom.highscoreStatus.textContent = '';
+      }
+    }
+
+    submitHighscore() {
+      if (!this.lastRunResult) return;
+      const rawName = this.dom.highscoreNameInput ? this.dom.highscoreNameInput.value : '';
+      const name = Save.cleanName(rawName);
+      this.save.playerName = name;
+      Save.save();
+
+      const entry = Object.assign({}, this.lastRunResult, { name });
+      const res = Save.addHighscore(entry);
+
+      if (this.dom.submitHighscoreBtn) {
+        this.dom.submitHighscoreBtn.disabled = true;
+        this.dom.submitHighscoreBtn.textContent = '✔ Eingetragen';
+      }
+      if (this.dom.highscoreNameInput) {
+        this.dom.highscoreNameInput.disabled = true;
+      }
+      if (this.dom.highscoreStatus) {
+        if (res.rank !== null) {
+          const medal = res.rank === 1 ? '🥇' : res.rank === 2 ? '🥈' : res.rank === 3 ? '🥉' : '🏆';
+          this.dom.highscoreStatus.innerHTML = `<span style="color:var(--accent-gold); font-weight:bold;">${medal} Platz #${res.rank} in der Bestenliste!</span>`;
+        } else {
+          this.dom.highscoreStatus.innerHTML = `<span style="color:var(--text-dim);">Score nicht unter den Top 20, aber tapfer geschlagen!</span>`;
+        }
+      }
+      Audio.play('chest');
+      this.toast(res.rank ? `Platz #${res.rank} eingetragen!` : 'Score erfasst!');
+    }
+
+    openHighscores() {
+      this.dom.highscoresScreen.classList.add('active');
+      this.renderHighscores();
+    }
+
+    renderHighscores() {
+      if (!this.dom.highscoresBody) return;
+      const list = this.save.highscores || Save.DEFAULT_HIGHSCORES;
+      this.dom.highscoresBody.innerHTML = '';
+
+      if (!list || list.length === 0) {
+        this.dom.highscoresBody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:20px; color:var(--text-dim);">Noch keine Einträge vorhanden. Hau die Egges!</td></tr>`;
+        return;
+      }
+
+      list.forEach((entry, idx) => {
+        const rank = idx + 1;
+        const row = document.createElement('tr');
+        if (rank <= 3) row.classList.add(`rank-${rank}`);
+
+        const rankBadge = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `#${rank}`;
+        const dateStr = entry.date || new Date().toISOString().slice(0, 10);
+
+        row.innerHTML = `
+          <td><span class="rank-badge">${rankBadge}</span></td>
+          <td style="font-weight:bold; color:#fff;">${entry.name || 'Kämpfer'}</td>
+          <td style="color:var(--accent-gold); font-weight:bold;">${util.fmtNum(entry.score || 0)}</td>
+          <td>Stage ${entry.stage || 1}</td>
+          <td>${entry.kills || 0}</td>
+          <td>${util.fmtTime(entry.time || 0)}</td>
+          <td style="color:var(--text-dim); font-size:8px;">${dateStr}</td>
+        `;
+        this.dom.highscoresBody.appendChild(row);
+      });
     }
 
     hideDeathScreen() {
@@ -489,6 +580,34 @@
         this.dom.startScreen.classList.remove('active');
         if (this.onStartGame) this.onStartGame(this.selectedStartWeapon);
       };
+
+      // Highscores-Button im Start- und Todesbildschirm
+      const openScores = () => this.openHighscores();
+      const btnHighscores = document.getElementById('btn-highscores');
+      if (btnHighscores) btnHighscores.onclick = openScores;
+
+      const btnDeathHighscores = document.getElementById('btn-death-highscores');
+      if (btnDeathHighscores) btnDeathHighscores.onclick = openScores;
+
+      const btnHighscoresBack = document.getElementById('btn-highscores-back');
+      if (btnHighscoresBack) {
+        btnHighscoresBack.onclick = () => {
+          this.dom.highscoresScreen.classList.remove('active');
+        };
+      }
+
+      // Highscore Eintragen Button & Enter-Taste
+      if (this.dom.submitHighscoreBtn) {
+        this.dom.submitHighscoreBtn.onclick = () => this.submitHighscore();
+      }
+      if (this.dom.highscoreNameInput) {
+        this.dom.highscoreNameInput.addEventListener('keydown', e => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            this.submitHighscore();
+          }
+        });
+      }
 
       // Skilltree-Button im Start- und Todesbildschirm
       const openTree = () => this.openSkilltree();

@@ -75,18 +75,42 @@ server.listen(PORT, async () => {
         send('Log.enable');
         send('Page.enable');
 
-        // 3 Sekunden laufen lassen
+        // Teste Highscores-Modal
         setTimeout(async () => {
-          // Klick auf Start-Button simulieren
           send('Runtime.evaluate', {
             expression: `
+              document.getElementById('btn-highscores').click();
+              const rows = document.querySelectorAll('#highscores-body tr');
+              console.log('Highscore rows in browser: ' + rows.length);
+              document.getElementById('btn-highscores-back').click();
+              // Klick auf Start-Button simulieren
               document.getElementById('btn-play').click();
               'started';
             `
           });
-          // noch 2 Sekunden das Spiel rendern lassen
-          setTimeout(resolve, 2000);
-        }, 2000);
+          // Spiel 1.5s laufen lassen, dann Death Screen mit Highscore-Eintrag testen
+          setTimeout(() => {
+            send('Runtime.evaluate', {
+              expression: `
+                // Simuliere Game Over
+                window.HDE.ui.showDeathScreen({
+                  stage: 4,
+                  time: 210,
+                  level: 15,
+                  kills: 180,
+                  bossKills: 3,
+                  shells: 95
+                });
+                // Trage Namen ein und klicke Submit
+                document.getElementById('highscore-name-input').value = 'TestKlopper';
+                document.getElementById('btn-submit-highscore').click();
+                const status = document.getElementById('highscore-status').textContent;
+                console.log('Highscore submit status: ' + status);
+              `
+            });
+            setTimeout(resolve, 1500);
+          }, 1500);
+        }, 1500);
       };
     });
 
