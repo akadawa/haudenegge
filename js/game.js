@@ -106,16 +106,21 @@
 
     xpNeed(level) { return Math.floor(5 + level * 4 + Math.pow(level, 1.6) * 0.8); }
 
-    /* Gegner-Skalierung pro Stage */
+    /* Gegner-Skalierung pro Stage & Level */
     scaling() {
       const st = this.stage - 1;
       const t = clamp(this.stageTime / C.STAGE_LEN, 0, 1.5);
       const s = this.stats;
+      const lvl = Math.max(1, this.level || 1);
+      // Skalierung mit Level & Stage damit Endgame-Runs fordernd bleiben
+      const lvlHp = 1 + (lvl - 1) * 0.08 + Math.pow(Math.max(0, lvl - 6) / 7, 1.7) * 0.45;
+      const stHp = Math.pow(1.24, Math.min(st, 120)) * (1 + 0.05 * Math.max(0, st - 120)) * (1 + 0.65 * t);
+      const speedScale = Math.min(1 + 0.02 * st, 1.45) * s.enemySpeed;
       return {
-        hp: Math.pow(1.17, st) * (1 + 0.6 * t) * s.enemyHp,
-        dmg: 1 + 0.08 * st,
-        speed: Math.min(1 + 0.02 * st, 1.45) * s.enemySpeed,
-        xp: 1 + 0.12 * st,
+        hp: stHp * lvlHp * s.enemyHp,
+        dmg: (1 + 0.1 * st + (lvl - 1) * 0.035) * (1 + 0.25 * t),
+        speed: speedScale,
+        xp: 1 + 0.12 * st + (lvl - 1) * 0.03,
       };
     }
 
@@ -368,6 +373,10 @@
       const len = Math.hypot(ix, iy);
       if (len > 1) { ix /= len; iy /= len; }
       let sp = s.speed;
+      if (this.coffeeBoost > 0) {
+        this.coffeeBoost -= dt;
+        sp *= 1.4;
+      }
       if (p.slowT > 0) { p.slowT -= dt; sp *= 0.65; }
       const tx = ix * sp, ty = iy * sp;
       if (s.slide) {
@@ -390,6 +399,28 @@
       if (p.burn > 0) {
         p.burn -= dt; p.burnT -= dt;
         if (p.burnT <= 0) { p.burnT = 0.5; this.hurtPlayer(2 * this.scaling().dmg, { dot: true }); }
+      }
+
+      // Anti-Camping (Mortar-Beschuss wenn Spieler stehen bleibt)
+      if (!this.headless && this.enemies.length >= 6 && this.stage >= 1 && this.state === 'playing') {
+        if (p.lastX === undefined) { p.lastX = p.x; p.lastY = p.y; }
+        const moved = Math.hypot(p.x - p.lastX, p.y - p.lastY);
+        if (moved < 16) {
+          p.campT = (p.campT || 0) + dt;
+          if (p.campT > 2.2) {
+            this.fx.push({ kind: 'mortar_target', x: p.x, y: p.y, r: 42, t: 0, dur: 0.25 });
+          }
+          if (p.campT > 3.4) {
+            p.campT = 1.8;
+            this.toast('⚠️ BEWEG DICH! MÖRSER-ANGRIFF!');
+            this.explodeAt(p.x, p.y, 60, 24 * this.scaling().dmg, { color: '#ff2233' });
+            this.addZone({ kind: 'puddle', x: p.x, y: p.y, r: 38, life: 4.5, max: 4.5 });
+            this.hurtPlayer(18 * this.scaling().dmg);
+          }
+        } else {
+          p.lastX = p.x; p.lastY = p.y;
+          p.campT = 0;
+        }
       }
     }
 
@@ -551,6 +582,7 @@
       let dmg = amount * this.dmgMult();
       let crit = false;
       if (!o.noCrit && this.rng.next() < s.crit) { dmg *= s.critMul; crit = true; }
+      if (e.def.shielded && !o.noCrit) dmg *= 0.55;
       if (e.chill > 0) dmg *= 1.5 * (s.grass > 1 ? 1.2 : 1);
       if (e.vuln > this.time) dmg *= 1.15;
       if (o.vsChill && e.chill > 0) dmg *= 2;
@@ -560,7 +592,7 @@
       if (o.kb) {
         let dx = e.x - (o.fx != null ? o.fx : this.player.x), dy = e.y - (o.fy != null ? o.fy : this.player.y);
         const d = Math.hypot(dx, dy) || 1;
-        const f = o.kb * (e.boss ? 0.12 : 1);
+        const f = o.kb * (e.boss ? 0.12 : (e.def.kbResist || 1));
         e.kx += (dx / d) * f; e.ky += (dy / d) * f;
       }
       if (o.stun && !e.boss) e.stun = Math.max(e.stun, o.stun);
@@ -649,11 +681,12 @@
       e.elite = false;
       e.r = mega ? 48 : 36;
       e.scale = mega ? 3.6 : 2.6;
-      e.hp = 1800 * Math.pow(1.26, st) * (mega ? 3.5 : 1) * this.stats.bossHp;
+      const lvlMul = 1 + ((this.level || 1) - 1) * 0.08;
+      e.hp = 2200 * Math.pow(1.3, Math.min(st, 120)) * lvlMul * (mega ? 3.5 : 1) * this.stats.bossHp;
       e.maxHp = e.hp;
-      e.speed = 50 * Math.min(1 + 0.015 * st, 1.4);
-      e.dmg = 14 * sc.dmg;
-      e.xp = 30 * sc.xp;
+      e.speed = 52 * Math.min(1 + 0.015 * st, 1.4);
+      e.dmg = 15 * sc.dmg;
+      e.xp = 35 * sc.xp;
       e.stoner = false; e.timid = false;
       const all = ['dash', 'shock', 'summon', 'spray'];
       if (mega) e.patterns = all.slice();
@@ -662,7 +695,7 @@
         rr.shuffle(all);
         e.patterns = all.slice(0, 2);
       }
-      e.pi = 0; e.bstate = 'move'; e.bt = 2.2; e.bphase = 0; e.wave = 0; e.enraged = false;
+      e.pi = 0; e.bstate = 'move'; e.bt = 2.0; e.bphase = 0; e.wave = 0; e.enraged = false;
       this.boss = e;
       this.sfx('boss');
       if (this.cb.boss) this.cb.boss({ name, mega, stage });
@@ -672,9 +705,9 @@
     /* ------------------------------------------------------------ Spawner */
     updateSpawner(dt) {
       const st = this.stage, s = this.stats;
-      const rate = (1.5 + 0.035 * this.stageTime) * (1 + 0.15 * (st - 1)) * s.enemyCount * (this.boss ? 0.5 : 1);
+      const rate = (2.0 + 0.045 * this.stageTime + 0.035 * (this.level || 1)) * (1 + 0.18 * (st - 1)) * s.enemyCount * (this.boss ? 0.6 : 1);
       this.spawnAcc += rate * dt;
-      const cap = Math.min(70 + 28 * st, 380) * Math.min(1.3, s.enemyCount);
+      const cap = Math.min(80 + 30 * st + (this.level || 1) * 3, 400) * Math.min(1.3, s.enemyCount);
       while (this.spawnAcc >= 1) {
         this.spawnAcc -= 1;
         if (this.enemies.length < cap) this.spawnRegular();
@@ -972,6 +1005,16 @@
       else if (e.elite) this.dropShell(e.x, e.y, 5);
       else if (this.rng.chance(0.04)) this.dropShell(e.x, e.y, 1);
       if (!silent) {
+        if (e.elite) {
+          if (this.rng.chance(0.35)) this.pickups.push({ kind: 'magnet', x: e.x, y: e.y, v: 1, life: 30 });
+          else if (this.rng.chance(0.25)) this.pickups.push({ kind: 'bomb', x: e.x, y: e.y, v: 1, life: 30 });
+          else if (this.rng.chance(0.25)) this.pickups.push({ kind: 'coffee', x: e.x, y: e.y, v: 1, life: 30 });
+        } else {
+          if (this.rng.chance(0.015)) this.pickups.push({ kind: 'heal', x: e.x, y: e.y, v: 22, life: 25 });
+          else if (this.rng.chance(0.008)) this.pickups.push({ kind: 'magnet', x: e.x, y: e.y, v: 1, life: 25 });
+          else if (this.rng.chance(0.006)) this.pickups.push({ kind: 'bomb', x: e.x, y: e.y, v: 1, life: 25 });
+          else if (this.rng.chance(0.01)) this.pickups.push({ kind: 'coffee', x: e.x, y: e.y, v: 1, life: 25 });
+        }
         switch (def.death) {
           case 'smoke': this.addZone({ kind: 'smoke', x: e.x, y: e.y, r: 52, life: 3.2, max: 3.2 }); break;
           case 'puddle': this.addZone({ kind: 'puddle', x: e.x, y: e.y, r: 46, life: 5, max: 5 }); break;
@@ -1014,8 +1057,44 @@
       this.fx.push({ kind: 'ring', x, y, r: 0, max: r, t: 0, dur: 0.5, color: '#ffffff' });
     }
 
+    vacuumAllGems() {
+      for (const g of this.gems) {
+        g.mag = true;
+        g.spd = Math.max(g.spd, 400);
+      }
+    }
+
+    detonateScreenBomb() {
+      const p = this.player;
+      this.shockwave(p.x, p.y, 650, 9999, 500);
+      for (const e of this.enemies) {
+        if (e.dead || e.boss) continue;
+        const dx = e.x - p.x, dy = e.y - p.y;
+        if (Math.abs(dx) < (this.viewW || 800) * 0.8 && Math.abs(dy) < (this.viewH || 600) * 0.8) {
+          this.hitEnemy(e, 99999, { noCrit: true });
+        }
+      }
+      this.shake = 1;
+      this.sfx('boom');
+    }
+
     /* ------------------------------------------------------------ Drops */
     dropGem(x, y, v) {
+      // Wenn Gems-Limit nahe ist: entfernteste Gems konsolidieren
+      if (this.gems.length >= 220) {
+        const p = this.player;
+        let furthestIdx = -1, maxD2 = 0;
+        for (let i = 0; i < this.gems.length; i++) {
+          const g = this.gems[i];
+          if (g.mag) continue;
+          const dx = g.x - p.x, dy = g.y - p.y, d2 = dx * dx + dy * dy;
+          if (d2 > maxD2) { maxD2 = d2; furthestIdx = i; }
+        }
+        if (furthestIdx >= 0 && maxD2 > 300 * 300) {
+          const removed = this.gems.splice(furthestIdx, 1)[0];
+          if (this.gems.length > 0) this.gems[0].v += removed.v;
+        }
+      }
       if (this.gems.length >= MAX_GEMS) {
         const g = this.gems[this.rng.int(0, this.gems.length - 1)];
         g.v += v;
@@ -1068,6 +1147,9 @@
           if (k.kind === 'shell') { this.collectedShells += k.v; this.sfx('shell'); }
           else if (k.kind === 'heal') { this.healPlayer(k.v); this.sfx('heal'); }
           else if (k.kind === 'chest') { this.pendingChests++; this.sfx('chest'); }
+          else if (k.kind === 'magnet') { this.vacuumAllGems(); this.toast('🧲 GEM-MAGNET!'); this.sfx('flash'); }
+          else if (k.kind === 'bomb') { this.detonateScreenBomb(); this.toast('💣 RIOT-BOMBE!'); }
+          else if (k.kind === 'coffee') { this.coffeeBoost = 8; this.toast('☕ KOFFEIN-BOOST!'); this.sfx('powerup'); }
           this.pickups.splice(i, 1);
         }
       }
@@ -1185,6 +1267,9 @@
           case 'orbit': this.updateOrbit(w, dt); break;
           case 'siren': this.updateSiren(w, dt); break;
           case 'drone': this.updateDrone(w, dt); break;
+          case 'searchlight': this.updateSearchlight(w, dt); break;
+          case 'k9': this.updateK9(w, dt); break;
+          case 'riot_shield': this.updateRiotShield(w, dt); break;
           default: {
             w.cdT -= dt;
             if (w.pending > 0) {
@@ -1192,15 +1277,90 @@
               if (w.shotT <= 0) {
                 this.fireWeapon(w, w.shotIdx++);
                 w.pending--;
-                w.shotT = w.kind === 'spray' ? 0.08 : 0.12;
+                w.shotT = w.kind === 'spray' ? 0.08 : w.kind === 'rubber_shotgun' ? 0.04 : 0.12;
               }
             } else if (w.cdT <= 0) {
               w.pending = Math.max(1, Math.round(s.count));
               w.shotIdx = 0;
               w.shotT = 0;
-              w.cdT = s.cd;
+              w.cdT = s.cd * (this.coffeeBoost > 0 ? 0.7 : 1);
             }
           }
+        }
+      }
+    }
+
+    updateSearchlight(w, dt) {
+      const p = this.player, s = w.stats;
+      w.angle = (w.angle || 0) + (s.speed || 2.2) * dt;
+      w.tickT = (w.tickT || 0) - dt;
+      if (w.tickT <= 0) {
+        w.tickT = 0.15;
+        const count = w.evo ? 2 : 1;
+        for (let b = 0; b < count; b++) {
+          const beamA = w.angle + (b * Math.PI);
+          this.query(p.x, p.y, s.range || 220, e => {
+            const edx = e.x - p.x, edy = e.y - p.y;
+            const ea = Math.atan2(edy, edx);
+            let diff = Math.abs(ea - beamA);
+            while (diff > Math.PI) diff = Math.abs(diff - TAU);
+            if (diff < 0.42) {
+              this.hitEnemy(e, s.dmg * 0.35, { noCrit: true, slow: s.slow || 0.4, burn: s.burn || 10, noText: this.floaters.length > 20 });
+            }
+          });
+        }
+      }
+    }
+
+    updateK9(w, dt) {
+      const p = this.player, s = w.stats;
+      if (!w.k9) w.k9 = { x: p.x + 30, y: p.y, biteT: 0, anim: 0, target: null };
+      const dog = w.k9;
+      dog.anim += dt * 8;
+      dog.biteT -= dt;
+      if (!dog.target || dog.target.dead || Math.hypot(dog.target.x - p.x, dog.target.y - p.y) > (s.range || 240) * 1.5) {
+        dog.target = this.nearestEnemy(dog.x, dog.y, s.range || 240);
+      }
+      let destX = p.x + 28, destY = p.y + 16;
+      if (dog.target) { destX = dog.target.x; destY = dog.target.y; }
+      const ddx = destX - dog.x, ddy = destY - dog.y, dd = Math.hypot(ddx, ddy) || 1;
+      const spd = (s.speed || 290) * (w.evo ? 1.35 : 1);
+      dog.x += (ddx / dd) * Math.min(dd, spd * dt);
+      dog.y += (ddy / dd) * Math.min(dd, spd * dt);
+      if (dog.target && dd < 28 && dog.biteT <= 0) {
+        dog.biteT = s.biteCd || 0.35;
+        this.hitEnemy(dog.target, s.dmg * (w.evo ? 1.6 : 1), { kb: s.kb || 140, fx: dog.x, fy: dog.y });
+        this.fx.push({ kind: 'bite', x: dog.target.x, y: dog.target.y, t: 0, dur: 0.15 });
+        this.sfx('hit');
+        if (w.evo && this.rng.chance(0.25)) {
+          this.shockwave(dog.x, dog.y, 90, s.dmg * 0.5, 140);
+        }
+      }
+    }
+
+    updateRiotShield(w, dt) {
+      const p = this.player, s = w.stats;
+      w.cdT -= dt;
+      if (w.cdT <= 0) {
+        w.cdT = s.cd * (this.coffeeBoost > 0 ? 0.7 : 1);
+        const a = Math.atan2(p.face.y, p.face.x);
+        const sx = p.x + Math.cos(a) * (s.range || 60), sy = p.y + Math.sin(a) * (s.range || 60);
+        this.fx.push({ kind: 'shield_bash', x: sx, y: sy, a, r: (s.size || 36) * 1.5, t: 0, dur: 0.22, evo: w.evo });
+        this.query(sx, sy, (s.size || 36) * 1.5, e => {
+          this.hitEnemy(e, s.dmg, { kb: s.kb || 360, fx: p.x, fy: p.y, stun: 0.4 });
+        });
+        if (w.evo) {
+          this.shockwave(p.x, p.y, (s.range || 60) * 1.8, s.dmg * 0.65, s.kb || 360);
+        }
+        this.sfx('hit');
+      }
+      // Projectiles deflection
+      const a = Math.atan2(p.face.y, p.face.x);
+      const sx = p.x + Math.cos(a) * (s.range || 60), sy = p.y + Math.sin(a) * (s.range || 60);
+      for (let i = this.eprojectiles.length - 1; i >= 0; i--) {
+        const q = this.eprojectiles[i];
+        if (Math.hypot(q.x - sx, q.y - sy) < (s.size || 36) * 1.6) {
+          this.eprojectiles.splice(i, 1);
         }
       }
     }
@@ -1387,6 +1547,57 @@
           });
           break;
         }
+        case 'megaphone': {
+          const aim = this.aimDir(s.range || 170);
+          const a = Math.atan2(aim.y, aim.x);
+          this.fx.push({ kind: 'sonic_cone', x: p.x, y: p.y, a, r: s.range || 170, t: 0, dur: 0.28 });
+          this.query(p.x, p.y, s.range || 170, e => {
+            const edx = e.x - p.x, edy = e.y - p.y;
+            const ea = Math.atan2(edy, edx);
+            let diff = Math.abs(ea - a);
+            while (diff > Math.PI) diff = Math.abs(diff - TAU);
+            if (diff < (w.evo ? Math.PI : 0.85)) {
+              this.hitEnemy(e, s.dmg, { kb: s.kb || 360, fx: p.x, fy: p.y, stun: s.stun || 0.35 });
+            }
+          });
+          if (w.evo) {
+            this.shockwave(p.x, p.y, (s.range || 170) * 1.25, s.dmg * 0.5, s.kb || 360);
+          }
+          this.sfx('shout');
+          break;
+        }
+        case 'mallet': {
+          const aim = this.aimDir(s.range || 85);
+          const a = Math.atan2(aim.y, aim.x);
+          const slamX = p.x + Math.cos(a) * (s.range || 85);
+          const slamY = p.y + Math.sin(a) * (s.range || 85);
+          this.fx.push({ kind: 'mallet_slam', x: slamX, y: slamY, a, r: s.blast || 70, t: 0, dur: 0.35, evo: w.evo });
+          this.explodeAt(slamX, slamY, s.blast || 70, s.dmg, { color: w.evo ? '#ffe066' : '#c8965a' });
+          if (w.evo) {
+            this.shockwave(slamX, slamY, (s.blast || 70) * 1.5, s.dmg * 0.6, (s.kb || 380) * 1.2);
+          }
+          this.shake = Math.min(1, this.shake + 0.35);
+          this.sfx('boom');
+          break;
+        }
+        case 'rubber_shotgun': {
+          const aim = this.aimDir(480);
+          const baseA = Math.atan2(aim.y, aim.x);
+          const count = Math.max(3, Math.round(s.count));
+          for (let i = 0; i < count; i++) {
+            const spreadAngle = (i - (count - 1) / 2) * 0.15;
+            const a = baseA + spreadAngle + this.rng.range(-0.05, 0.05);
+            this.projectiles.push({
+              kind: 'rubber_slug',
+              x: p.x, y: p.y,
+              vx: Math.cos(a) * s.speed, vy: Math.sin(a) * s.speed,
+              r: s.size, dmg: s.dmg, life: s.life, bounces: s.bounces || 2,
+              hits: [], rot: a, evo: w.evo, kb: s.kb
+            });
+          }
+          this.sfx('gunshot');
+          break;
+        }
       }
     }
 
@@ -1476,6 +1687,28 @@
               q.hit = true;
               this.hitEnemy(e, q.dmg, { kb: 40, fx: q.x, fy: q.y });
               q.life = 0;
+            });
+            if (q.life <= 0) remove = true;
+            break;
+          }
+          case 'rubber_slug': {
+            q.x += q.vx * dt; q.y += q.vy * dt; q.life -= dt;
+            const boundW = 850, boundH = 650;
+            if (Math.abs(q.x) > boundW && q.bounces > 0) { q.vx *= -1; q.bounces--; q.x = Math.sign(q.x) * boundW; }
+            if (Math.abs(q.y) > boundH && q.bounces > 0) { q.vy *= -1; q.bounces--; q.y = Math.sign(q.y) * boundH; }
+            this.query(q.x, q.y, q.r, e => {
+              if (q.hits.includes(e.id)) return;
+              q.hits.push(e.id);
+              this.hitEnemy(e, q.dmg, { kb: q.kb || 180, fx: q.x, fy: q.y });
+              if (q.bounces > 0) {
+                q.bounces--;
+                const next = this.nearestEnemy(q.x, q.y, 300, ...q.hits);
+                if (next) {
+                  const dx = next.x - q.x, dy = next.y - q.y, d = Math.hypot(dx, dy) || 1;
+                  const sp = Math.hypot(q.vx, q.vy) || 520;
+                  q.vx = (dx / d) * sp; q.vy = (dy / d) * sp;
+                }
+              }
             });
             if (q.life <= 0) remove = true;
             break;

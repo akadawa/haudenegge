@@ -260,7 +260,7 @@
         }
       }
 
-      // Eierschalen, Hühnchen & Truhen
+      // Eierschalen, Hühnchen, Truhen, Magnet, Bombe, Kaffee
       for (const k of game.pickups) {
         const bob = Math.sin(t * 5 + k.x) * 3;
         if (k.kind === 'shell') {
@@ -273,6 +273,24 @@
           ctx.shadowColor = '#ffe14a';
           ctx.shadowBlur = 12;
           ctx.drawImage(Sprites.emoji('🎁', 28), k.x - 14, k.y - 14 + bob, 28, 28);
+          ctx.restore();
+        } else if (k.kind === 'magnet') {
+          ctx.save();
+          ctx.shadowColor = '#00f0ff';
+          ctx.shadowBlur = 12;
+          ctx.drawImage(Sprites.emoji('🧲', 24), k.x - 12, k.y - 12 + bob, 24, 24);
+          ctx.restore();
+        } else if (k.kind === 'bomb') {
+          ctx.save();
+          ctx.shadowColor = '#ff4400';
+          ctx.shadowBlur = 12;
+          ctx.drawImage(Sprites.emoji('💣', 24), k.x - 12, k.y - 12 + bob, 24, 24);
+          ctx.restore();
+        } else if (k.kind === 'coffee') {
+          ctx.save();
+          ctx.shadowColor = '#ffe066';
+          ctx.shadowBlur = 10;
+          ctx.drawImage(Sprites.emoji('☕', 22), k.x - 11, k.y - 11 + bob, 22, 22);
           ctx.restore();
         }
       }
@@ -484,7 +502,7 @@
         }
       }
 
-      // 3. Überwachungsdrohne
+      // 3. Überwachungsdrohne, Suchscheinwerfer, K9, Schutzschild
       const drone = game.getWeapon('drone');
       if (drone && drone.pos && drone.pos[0]) {
         const d = drone.pos[0];
@@ -499,7 +517,53 @@
         ctx.restore();
       }
 
-      // 4. Projektile (Kugeln, Handschellen, Pfefferspray, Wasserwerfer, Blendgranaten, Laser)
+      // Suchscheinwerfer (Lichtkegel auf den Boden projiziert)
+      const searchlight = game.getWeapon('searchlight');
+      if (searchlight && searchlight.stats) {
+        const s = searchlight.stats;
+        const count = searchlight.evo ? 2 : 1;
+        for (let b = 0; b < count; b++) {
+          const beamA = (searchlight.angle || 0) + (b * Math.PI);
+          ctx.save();
+          const grad = ctx.createRadialGradient(p.x, p.y, 10, p.x, p.y, s.range || 220);
+          grad.addColorStop(0, searchlight.evo ? 'rgba(255, 245, 170, 0.65)' : 'rgba(180, 235, 255, 0.45)');
+          grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.moveTo(p.x, p.y);
+          ctx.arc(p.x, p.y, s.range || 220, beamA - 0.42, beamA + 0.42);
+          ctx.closePath();
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+
+      // K9 Polizeihund "Bello"
+      const k9w = game.getWeapon('k9');
+      if (k9w && k9w.k9) {
+        const dog = k9w.k9;
+        ctx.save();
+        ctx.translate(dog.x, dog.y);
+        const flip = dog.target && dog.target.x < dog.x ? -1 : 1;
+        ctx.scale(flip, 1);
+        const sz = k9w.evo ? 28 : 22;
+        ctx.drawImage(Sprites.emoji(k9w.evo ? '🐺' : '🐕', sz), -sz / 2, -sz / 2, sz, sz);
+        ctx.restore();
+      }
+
+      // Einsatz-Schild
+      const shield = game.getWeapon('riot_shield');
+      if (shield && shield.stats) {
+        const a = Math.atan2(p.face.y, p.face.x);
+        const sx = p.x + Math.cos(a) * 34, sy = p.y + Math.sin(a) * 34;
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.rotate(a + Math.PI / 2);
+        ctx.drawImage(Sprites.emoji(shield.evo ? '🔰' : '🛡️', 26), -13, -13, 26, 26);
+        ctx.restore();
+      }
+
+      // 4. Projektile (Kugeln, Gummischrot, Handschellen, Pfefferspray, Wasserwerfer, Blendgranaten, Laser)
       for (const q of game.projectiles) {
         ctx.save();
         ctx.translate(q.x, q.y);
@@ -511,6 +575,15 @@
             ctx.fillRect(-sz, -2, sz * 2, 4);
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(-sz * 0.4, -1, sz * 0.8, 2);
+            break;
+          case 'rubber_slug':
+            ctx.fillStyle = q.evo ? '#ffd000' : '#444444';
+            ctx.beginPath();
+            ctx.arc(0, 0, q.r, 0, TAU);
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
             break;
           case 'handcuffs':
             ctx.drawImage(Sprites.emoji('⛓️', Math.round(sz)), -sz / 2, -sz / 2, sz, sz);
@@ -596,6 +669,51 @@
           ctx.beginPath();
           ctx.arc(f.x, f.y, 5, 0, TAU);
           ctx.fill();
+          ctx.restore();
+        } else if (f.kind === 'mortar_target') {
+          ctx.save();
+          const pulse = Math.sin(game.time * 20) * 0.3 + 0.7;
+          ctx.strokeStyle = `rgba(255, 30, 50, ${pulse})`;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, f.r, 0, TAU);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(f.x - f.r * 1.3, f.y); ctx.lineTo(f.x + f.r * 1.3, f.y);
+          ctx.moveTo(f.x, f.y - f.r * 1.3); ctx.lineTo(f.x, f.y + f.r * 1.3);
+          ctx.stroke();
+          ctx.restore();
+        } else if (f.kind === 'sonic_cone') {
+          ctx.save();
+          ctx.globalAlpha = 1 - frac;
+          ctx.strokeStyle = '#00f0ff';
+          ctx.lineWidth = 4 * (1 - frac * 0.5);
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, f.r * frac, f.a - 0.75, f.a + 0.75);
+          ctx.stroke();
+          ctx.restore();
+        } else if (f.kind === 'mallet_slam') {
+          ctx.save();
+          ctx.globalAlpha = 1 - frac;
+          ctx.strokeStyle = f.evo ? '#ffe14a' : '#c8965a';
+          ctx.lineWidth = 6 * (1 - frac * 0.5);
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, f.r * frac, 0, TAU);
+          ctx.stroke();
+          ctx.restore();
+        } else if (f.kind === 'bite') {
+          ctx.save();
+          ctx.globalAlpha = 1 - frac;
+          ctx.drawImage(Sprites.emoji('🦷', 20), f.x - 10, f.y - 10, 20, 20);
+          ctx.restore();
+        } else if (f.kind === 'shield_bash') {
+          ctx.save();
+          ctx.globalAlpha = 1 - frac;
+          ctx.strokeStyle = f.evo ? '#00f0ff' : '#ffffff';
+          ctx.lineWidth = 4.5;
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, f.r * frac, f.a - 0.8, f.a + 0.8);
+          ctx.stroke();
           ctx.restore();
         }
       }
