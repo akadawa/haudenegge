@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Hau den Egge - Das Roguelite</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🥚</text></svg>">
+</head>
+<body>
+  <div id="game-container">
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- In-Game HUD -->
+    <div id="hud">
+      <div class="hud-top-row">
+        <div class="xp-bar-container">
+          <div id="xp-fill" class="xp-bar-fill"></div>
+          <span id="xp-label" class="xp-label">LV 1 (0 / 5)</span>
+        </div>
+        <div id="timer-box" class="timer-box">00:00</div>
+        <div id="stage-badge" class="stage-badge">Stage 1 • Jahrmarkt</div>
+        <div class="kills-box">💀 <span id="kill-count">0</span></div>
+        <div class="shells-box">🥚 <span id="shell-count">0</span></div>
+      </div>
+
+      <div class="hud-bottom-row">
+        <div class="hp-bar-container">
+          <div id="hp-fill" class="hp-bar-fill"></div>
+          <span id="hp-label" class="hp-label">100 / 100</span>
+        </div>
+        <div id="weapon-slots" class="inventory-slots"></div>
+        <div id="passive-slots" class="inventory-slots"></div>
+      </div>
+    </div>
+
+    <!-- Boss Health Bar -->
+    <div id="boss-hud">
+      <div id="boss-title" class="boss-title">MEGA-EGGE</div>
+      <div class="boss-bar">
+        <div id="boss-fill" class="boss-bar-fill"></div>
+      </div>
+    </div>
+
+    <!-- Start Screen / Hauptmenü -->
+    <div id="start-screen" class="overlay-screen active">
+      <div class="modal-box">
+        <h1 class="game-logo">HAU DEN EGGE</h1>
+        <p class="game-sub">Das endlose Roguelite • Weiche den Egges aus & hau sie um!</p>
+
+        <div class="weapon-select-box">
+          <label style="color:var(--text-dim); font-size:8px;">WÄHLE DEINE STARTWAFFE:</label>
+          <div id="start-weapon-picker" class="weapon-pick-row"></div>
+        </div>
+
+        <div class="btn-row" style="margin-top:12px;">
+          <button id="btn-play" class="game-btn primary" style="font-size:12px; padding:12px 28px;">▶ SPIELEN</button>
+          <button id="btn-skilltree" class="game-btn">🌳 SKILLTREE</button>
+          <button id="btn-perks" class="game-btn">✨ PERKS</button>
+          <button id="btn-settings" class="game-btn">⚙ EINSTELLUNGEN</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Level-Up / Truhen Modal -->
+    <div id="levelup-screen" class="overlay-screen">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h2 id="level-title" class="modal-title">⭐ LEVEL-UP!</h2>
+          <p id="level-subtitle" class="modal-subtitle">Wähle eine Verbesserung für diesen Run:</p>
+        </div>
+
+        <div id="level-cards" class="cards-grid"></div>
+
+        <div class="btn-row">
+          <button id="btn-reroll" class="game-btn">🎲 Neu würfeln (1)</button>
+          <button id="btn-skip" class="game-btn">⏩ Überspringen (+10% HP)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="death-screen" class="overlay-screen">
+      <div class="modal-box" style="max-width: 540px;">
+        <div class="modal-header">
+          <h2 class="modal-title" style="color:var(--accent-red);">BONK! DU BIST GESCHLAGEN.</h2>
+          <p class="modal-subtitle">Die Egges waren diesmal zu bekifft und zu viele.</p>
+        </div>
+
+        <div id="death-unlocks" style="display:flex; flex-direction:column; gap:6px;"></div>
+        <div id="death-stats" class="death-stats-grid"></div>
+
+        <div class="btn-row" style="margin-top:8px;">
+          <button id="btn-death-restart" class="game-btn primary">🔄 NOCHMAL SPIELEN</button>
+          <button id="btn-death-tree" class="game-btn">🌳 SKILLTREE</button>
+          <button id="btn-death-perks" class="game-btn">✨ PERKS</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Meta-Skilltree Screen -->
+    <div id="skilltree-screen" class="overlay-screen">
+      <div class="modal-box" style="max-width: 960px;">
+        <div class="modal-header" style="flex-direction:row; justify-content:space-between; align-items:center;">
+          <div>
+            <h2 class="modal-title">🌳 META-SKILLTREE</h2>
+            <p class="modal-subtitle">Permanente Upgrades, die für immer gelten.</p>
+          </div>
+          <div id="tree-shells" style="color:var(--accent-gold); font-size:12px;">🥚 0 Eierschalen</div>
+        </div>
+
+        <div id="tree-branches" class="tree-branches"></div>
+
+        <div class="btn-row">
+          <button id="btn-tree-back" class="game-btn primary">◀ ZURÜCK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Perks Screen -->
+    <div id="perks-screen" class="overlay-screen">
+      <div class="modal-box" style="max-width: 860px;">
+        <div class="modal-header" style="flex-direction:row; justify-content:space-between; align-items:center;">
+          <div>
+            <h2 class="modal-title">✨ PERK-SLOTS</h2>
+            <p class="modal-subtitle">Slots ab Stage 3, 9, 18, 30, 45... Jeder Perk bringt Wucht & einen Nachteil.</p>
+          </div>
+          <div id="perk-shells" style="color:var(--accent-gold); font-size:12px;">🥚 0 Eierschalen</div>
+        </div>
+
+        <div class="perks-container">
+          <div id="perks-list" class="perk-slots-list"></div>
+          <div id="perk-choices-area"></div>
+        </div>
+
+        <div class="btn-row">
+          <button id="btn-perks-back" class="game-btn primary">◀ ZURÜCK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings Screen -->
+    <div id="settings-screen" class="overlay-screen">
+      <div class="modal-box" style="max-width: 540px;">
+        <div class="modal-header">
+          <h2 class="modal-title">⚙ EINSTELLUNGEN</h2>
+        </div>
+
+        <div style="display:flex; flex-direction:column; gap:14px; font-size:9px;">
+          <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+            <span>Soundeffekte (SFX):</span>
+            <input type="checkbox" id="setting-sfx" checked>
+          </label>
+          <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+            <span>Retro-Musik:</span>
+            <input type="checkbox" id="setting-music" checked>
+          </label>
+          <label style="display:flex; justify-content:space-between; align-items:center; cursor:pointer;">
+            <span>Foto-Köpfe nutzen:</span>
+            <input type="checkbox" id="setting-photo">
+          </label>
+
+          <hr style="border:0; border-top:1px solid #3c3052;">
+
+          <div style="display:flex; flex-direction:column; gap:6px;">
+            <span>Spielstand Exportieren / Importieren:</span>
+            <textarea id="save-export-box" readonly style="width:100%; height:55px; background:#181222; border:1px solid #4a3e66; color:#a89fc0; font-family:monospace; font-size:8px; padding:6px; resize:none;"></textarea>
+            <div style="display:flex; gap:8px;">
+              <button id="btn-copy-save" class="game-btn" style="flex:1; font-size:8px; padding:6px;">Code kopieren</button>
+              <button id="btn-import-save" class="game-btn" style="flex:1; font-size:8px; padding:6px;">Code importieren</button>
+            </div>
+          </div>
+
+          <button id="btn-reset-save" class="game-btn" style="color:var(--accent-red); border-color:#8a2020; margin-top:6px; font-size:8px;">
+            ⚠ Spielstand komplett zurücksetzen
+          </button>
+        </div>
+
+        <div class="btn-row" style="margin-top:10px;">
+          <button id="btn-settings-back" class="game-btn primary">◀ ZURÜCK</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Virtual Touch Joystick -->
+    <div id="touch-controls">
+      <div id="touch-stick"></div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast"></div>
+  </div>
+
+  <!-- Scripts in korrekter Ladereihenfolge -->
+  <script src="js/util.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/save.js"></script>
+  <script src="js/meta.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

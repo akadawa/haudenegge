@@ -1,0 +1,14 @@
+{
+  "name": "haudenegge",
+  "version": "1.0.0",
+  "description": "Hau den Egge - Ein endloses Browser-Roguelite im Vampire-Survivors-Stil",
+  "main": "index.html",
+  "scripts": {
+    "test": "node tests/test.js",
+    "sim": "node tests/sim.js",
+    "start": "npx serve ."
+  },
+  "keywords": ["roguelite", "game", "vampire-survivors", "pixelart", "canvas"],
+  "author": "",
+  "license": "MIT"
+}
