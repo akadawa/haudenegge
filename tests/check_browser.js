@@ -75,7 +75,7 @@ server.listen(PORT, async () => {
         send('Log.enable');
         send('Page.enable');
 
-        // Teste Highscores-Modal
+        // Teste Highscores-Modal & Spielstart
         setTimeout(async () => {
           send('Runtime.evaluate', {
             expression: `
@@ -88,29 +88,78 @@ server.listen(PORT, async () => {
               'started';
             `
           });
-          // Spiel 1.5s laufen lassen, dann Death Screen mit Highscore-Eintrag testen
+
+          // Teste Level-Up (Darf NICHT durch 's' abgebrochen werden!)
           setTimeout(() => {
             send('Runtime.evaluate', {
               expression: `
-                // Simuliere Game Over
-                window.HDE.ui.showDeathScreen({
-                  stage: 4,
-                  time: 210,
-                  level: 15,
-                  kills: 180,
-                  bossKills: 3,
-                  shells: 95
-                });
-                // Trage Namen ein und klicke Submit
-                document.getElementById('highscore-name-input').value = 'TestKlopper';
-                document.getElementById('btn-submit-highscore').click();
-                const status = document.getElementById('highscore-status').textContent;
-                console.log('Highscore submit status: ' + status);
+                const ui = window.HDE.ui;
+                const game = window.HDE.game;
+                game.openLevelUp('level');
+                console.log('LevelUp open: ' + ui.dom.levelUpScreen.classList.contains('active'));
+
+                // Drücke 's' (wie bei WASD-Bewegung)
+                window.dispatchEvent(new KeyboardEvent('keydown', { key: 's' }));
+                const stillOpenAfterS = ui.dom.levelUpScreen.classList.contains('active');
+                console.log('LevelUp still open after pressing S: ' + stillOpenAfterS);
+
+                // Wähle Option 1
+                window.dispatchEvent(new KeyboardEvent('keydown', { key: '1' }));
+                const closedAfterPick = !ui.dom.levelUpScreen.classList.contains('active');
+                console.log('LevelUp closed after choosing 1: ' + closedAfterPick);
+
+                // Teste ESC Pause
+                window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+                const pauseActive = ui.dom.pauseScreen.classList.contains('active');
+                const statePaused = (game.state === 'paused');
+                console.log('Pause active on ESC: ' + pauseActive + ', state: ' + statePaused);
+
+                // ESC erneut drücken um weiterzuspielen
+                window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+                const resumed = !ui.dom.pauseScreen.classList.contains('active') && (game.state === 'playing');
+                console.log('Resumed on second ESC: ' + resumed);
               `
             });
-            setTimeout(resolve, 1500);
-          }, 1500);
-        }, 1500);
+
+            // Teste Speichern & LocalStorage Reload
+            setTimeout(() => {
+              send('Runtime.evaluate', {
+                expression: `
+                  const Save = window.HDE.Save;
+                  const Meta = window.HDE.Meta;
+                  Save.data.shells = 500;
+                  Save.save();
+                  Meta.buyNode(Save.data, 'm1');
+                  Save.save();
+                  const rawLocal = localStorage.getItem('hau_den_egge_save');
+                  const parsed = JSON.parse(rawLocal);
+                  console.log('LocalStorage node m1 saved: ' + (parsed.nodes && parsed.nodes.m1 === 1));
+
+                  // Simuliere Game Over
+                  window.HDE.ui.showDeathScreen({
+                    stage: 4,
+                    time: 210,
+                    level: 15,
+                    kills: 180,
+                    bossKills: 3,
+                    shells: 95
+                  });
+                  // Trage Namen ein und klicke Submit
+                  document.getElementById('highscore-name-input').value = 'TestKlopper';
+                  document.getElementById('btn-submit-highscore').click();
+                  const status = document.getElementById('highscore-status').textContent;
+                  console.log('Highscore submit status: ' + status);
+
+                  // Überprüfe HP Bar Styling
+                  const hpLabel = document.getElementById('hp-label');
+                  const hpStyle = window.getComputedStyle(hpLabel);
+                  console.log('HP label white-space: ' + hpStyle.whiteSpace);
+                `
+              });
+              setTimeout(resolve, 1500);
+            }, 1200);
+          }, 1200);
+        }, 1200);
       };
     });
 

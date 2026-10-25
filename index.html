@@ -22,6 +22,7 @@
         <div id="stage-badge" class="stage-badge">Stage 1 • Jahrmarkt</div>
         <div class="kills-box">💀 <span id="kill-count">0</span></div>
         <div class="shells-box">🥚 <span id="shell-count">0</span></div>
+        <button id="btn-hud-pause" class="hud-pause-btn" title="Pause (Esc)">⏸</button>
       </div>
 
       <div class="hud-bottom-row">
@@ -75,7 +76,40 @@
 
         <div class="btn-row">
           <button id="btn-reroll" class="game-btn">🎲 Neu würfeln (1)</button>
-          <button id="btn-skip" class="game-btn">⏩ Überspringen (+10% HP)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pause Screen Modal -->
+    <div id="pause-screen" class="overlay-screen">
+      <div class="modal-box" style="max-width: 520px;">
+        <div class="modal-header">
+          <h2 class="modal-title">⏸ SPIEL PAUSIERT</h2>
+          <p class="modal-subtitle">Kurze Verschnaufpause beim Egge-Hauen</p>
+        </div>
+
+        <div id="pause-stats" class="death-stats-grid" style="margin-bottom:12px;"></div>
+
+        <div class="settings-box" style="margin-bottom:12px;">
+          <h3 style="font-size:9px; color:var(--accent-gold); margin-bottom:8px;">⚙ SCHNELL-EINSTELLUNGEN:</h3>
+          <div class="setting-row">
+            <span>🔊 Soundeffekte</span>
+            <input type="checkbox" id="pause-setting-sfx" checked>
+          </div>
+          <div class="setting-row">
+            <span>🎵 Chiptune-Musik</span>
+            <input type="checkbox" id="pause-setting-music" checked>
+          </div>
+          <div class="setting-row">
+            <span>🖼️ Foto-Karikatur Modus</span>
+            <input type="checkbox" id="pause-setting-photo">
+          </div>
+        </div>
+
+        <div class="btn-row">
+          <button id="btn-pause-resume" class="game-btn primary">▶ WEITERSPIELEN</button>
+          <button id="btn-pause-restart" class="game-btn">🔄 NEUSTART</button>
+          <button id="btn-pause-quit" class="game-btn" style="color:var(--accent-red); border-color:#8a2020;">🏠 AUFGEBEN</button>
         </div>
       </div>
     </div>

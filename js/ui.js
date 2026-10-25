@@ -4,9 +4,15 @@
   const { data: D, Meta, Save, Audio, Sprites, util } = HDE;
 
   class UI {
+    get save() {
+      return Save.data || Save.load();
+    }
+    set save(v) {
+      Save.data = v;
+    }
+
     constructor() {
       this.game = null;
-      this.save = Save.data || Save.load();
       this.selectedStartWeapon = this.save.lastWeapon || 'hammer';
       this.lastRunResult = null;
 
@@ -41,14 +47,21 @@
         highscoreNameInput: document.getElementById('highscore-name-input'),
         submitHighscoreBtn: document.getElementById('btn-submit-highscore'),
         highscoreStatus: document.getElementById('highscore-status'),
-        highscoresScreen: document.getElementById('highscores-screen'),
+        pauseScreen: document.getElementById('pause-screen'),
+        pauseStats: document.getElementById('pause-stats'),
+        pauseSfxToggle: document.getElementById('pause-setting-sfx'),
+        pauseMusicToggle: document.getElementById('pause-setting-music'),
+        pausePhotoToggle: document.getElementById('pause-setting-photo'),
+        hudPauseBtn: document.getElementById('btn-hud-pause'),
+        pauseResumeBtn: document.getElementById('btn-pause-resume'),
+        pauseRestartBtn: document.getElementById('btn-pause-restart'),
+        pauseQuitBtn: document.getElementById('btn-pause-quit'),
 
         // Level Up Cards
         levelCards: document.getElementById('level-cards'),
         levelTitle: document.getElementById('level-title'),
         levelSubtitle: document.getElementById('level-subtitle'),
         rerollBtn: document.getElementById('btn-reroll'),
-        skipBtn: document.getElementById('btn-skip'),
 
         // Death Screen
         deathStats: document.getElementById('death-stats'),
@@ -163,6 +176,10 @@
 
     /* ------------------------------------------------------------ Level-Up Modal */
     showLevelUp(choices, kind) {
+      if (this.game) {
+        this.game.input.x = 0;
+        this.game.input.y = 0;
+      }
       this.dom.levelUpScreen.classList.add('active');
       this.dom.levelTitle.textContent = kind === 'chest' ? '🎁 SCHATZTRUHE!' : '⭐ LEVEL-UP!';
       this.dom.levelSubtitle.textContent = kind === 'chest' ? 'Wähle deinen Bonus!' : 'Wähle eine Verbesserung für diesen Run:';
@@ -194,6 +211,68 @@
 
     hideLevelUp() {
       this.dom.levelUpScreen.classList.remove('active');
+    }
+
+    /* ------------------------------------------------------------ Pause Menu */
+    togglePause() {
+      if (!this.game) return;
+      if (this.game.state === 'playing') {
+        this.pauseGame();
+      } else if (this.game.state === 'paused') {
+        this.resumeGame();
+      }
+    }
+
+    pauseGame() {
+      if (!this.game || this.game.state !== 'playing') return;
+      this.game.state = 'paused';
+      this.game.input.x = 0;
+      this.game.input.y = 0;
+      Audio.stopMusic();
+
+      if (this.dom.pauseStats) {
+        this.dom.pauseStats.innerHTML = `
+          <div class="death-stat-item">
+            <span class="death-stat-label">Stage</span>
+            <span class="death-stat-val">${this.game.stage}</span>
+          </div>
+          <div class="death-stat-item">
+            <span class="death-stat-label">Überlebte Zeit</span>
+            <span class="death-stat-val">${util.fmtTime(this.game.time)}</span>
+          </div>
+          <div class="death-stat-item">
+            <span class="death-stat-label">Level</span>
+            <span class="death-stat-val">Lv. ${this.game.level}</span>
+          </div>
+          <div class="death-stat-item">
+            <span class="death-stat-label">Egges gehauen</span>
+            <span class="death-stat-val">${this.game.kills}</span>
+          </div>
+          <div class="death-stat-item">
+            <span class="death-stat-label">Bosse besiegt</span>
+            <span class="death-stat-val">${this.game.bossKills}</span>
+          </div>
+          <div class="death-stat-item">
+            <span class="death-stat-label">Eierschalen im Run</span>
+            <span class="death-stat-val">🥚 +${this.game.collectedShells}</span>
+          </div>
+        `;
+      }
+
+      if (this.dom.pauseSfxToggle) this.dom.pauseSfxToggle.checked = this.save.settings.sound !== false;
+      if (this.dom.pauseMusicToggle) this.dom.pauseMusicToggle.checked = this.save.settings.music !== false;
+      if (this.dom.pausePhotoToggle) this.dom.pausePhotoToggle.checked = this.save.settings.photo === true;
+
+      this.dom.pauseScreen.classList.add('active');
+    }
+
+    resumeGame() {
+      if (!this.game || this.game.state !== 'paused') return;
+      this.game.state = 'playing';
+      this.dom.pauseScreen.classList.remove('active');
+      if (this.save.settings.music !== false) {
+        Audio.startMusic();
+      }
     }
 
     /* ------------------------------------------------------------ Game Over */
@@ -637,21 +716,16 @@
         if (this.onStartGame) this.onStartGame(this.selectedStartWeapon);
       };
 
-      // Level-Up Buttons (Reroll, Skip)
-      this.dom.rerollBtn.onclick = () => {
-        if (this.game && this.game.reroll()) {
-          this.showLevelUp(this.game.choices, this.game.choiceKind);
-        }
-      };
+      // Level-Up Buttons (Reroll)
+      if (this.dom.rerollBtn) {
+        this.dom.rerollBtn.onclick = () => {
+          if (this.game && this.game.reroll()) {
+            this.showLevelUp(this.game.choices, this.game.choiceKind);
+          }
+        };
+      }
 
-      this.dom.skipBtn.onclick = () => {
-        if (this.game) {
-          this.game.skipChoice();
-          this.hideLevelUp();
-        }
-      };
-
-      // Tastatur-Kürzel für Level-Up (1..4)
+      // Tastatur-Kürzel für Level-Up (1..4 und R für Reroll; KEIN WASD-Abbruch!)
       window.addEventListener('keydown', e => {
         if (this.game && this.game.state === 'levelup') {
           const num = parseInt(e.key, 10);
@@ -659,12 +733,85 @@
             this.game.pickChoice(num - 1);
             this.hideLevelUp();
           } else if (e.key === 'r' || e.key === 'R') {
-            this.dom.rerollBtn.click();
-          } else if (e.key === 's' || e.key === 'S') {
-            this.dom.skipBtn.click();
+            if (this.dom.rerollBtn) this.dom.rerollBtn.click();
           }
         }
       });
+
+      // ESC Taste für Pause & Menü schließen
+      window.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+          if (this.dom.pauseScreen && this.dom.pauseScreen.classList.contains('active')) {
+            this.resumeGame();
+          } else if (this.game && this.game.state === 'playing') {
+            this.pauseGame();
+          } else if (this.dom.settingsScreen && this.dom.settingsScreen.classList.contains('active')) {
+            this.dom.settingsScreen.classList.remove('active');
+          } else if (this.dom.highscoresScreen && this.dom.highscoresScreen.classList.contains('active')) {
+            this.dom.highscoresScreen.classList.remove('active');
+          } else if (this.dom.skilltreeScreen && this.dom.skilltreeScreen.classList.contains('active')) {
+            this.dom.skilltreeScreen.classList.remove('active');
+          } else if (this.dom.perksScreen && this.dom.perksScreen.classList.contains('active')) {
+            this.dom.perksScreen.classList.remove('active');
+          }
+        }
+      });
+
+      // Pause-Screen Buttons & HUD-Pause Button
+      if (this.dom.hudPauseBtn) {
+        this.dom.hudPauseBtn.onclick = () => this.togglePause();
+      }
+      if (this.dom.pauseResumeBtn) {
+        this.dom.pauseResumeBtn.onclick = () => this.resumeGame();
+      }
+      if (this.dom.pauseRestartBtn) {
+        this.dom.pauseRestartBtn.onclick = () => {
+          this.dom.pauseScreen.classList.remove('active');
+          if (this.onStartGame) this.onStartGame(this.selectedStartWeapon);
+        };
+      }
+      if (this.dom.pauseQuitBtn) {
+        this.dom.pauseQuitBtn.onclick = () => {
+          this.dom.pauseScreen.classList.remove('active');
+          if (this.game) {
+            const res = {
+              stage: this.game.stage,
+              time: Math.floor(this.game.time),
+              level: this.game.level,
+              kills: this.game.kills,
+              bossKills: this.game.bossKills,
+              shells: this.game.collectedShells,
+            };
+            this.showDeathScreen(res);
+          }
+        };
+      }
+
+      // Pause Schnell-Einstellungen
+      if (this.dom.pauseSfxToggle) {
+        this.dom.pauseSfxToggle.onchange = e => {
+          this.save.settings.sound = e.target.checked;
+          Save.save();
+          Audio.setMuted(!e.target.checked);
+          if (this.dom.sfxToggle) this.dom.sfxToggle.checked = e.target.checked;
+        };
+      }
+      if (this.dom.pauseMusicToggle) {
+        this.dom.pauseMusicToggle.onchange = e => {
+          this.save.settings.music = e.target.checked;
+          Save.save();
+          Audio.setMusic(e.target.checked);
+          if (this.dom.musicToggle) this.dom.musicToggle.checked = e.target.checked;
+        };
+      }
+      if (this.dom.pausePhotoToggle) {
+        this.dom.pausePhotoToggle.onchange = e => {
+          this.save.settings.photo = e.target.checked;
+          Save.save();
+          Sprites.init(Sprites.photos, e.target.checked);
+          if (this.dom.photoToggle) this.dom.photoToggle.checked = e.target.checked;
+        };
+      }
 
       // Settings
       document.getElementById('btn-settings').onclick = () => {

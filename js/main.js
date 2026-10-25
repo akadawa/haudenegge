@@ -94,7 +94,7 @@
   }
 
   function startNewRun(startWeapon) {
-    const save = Save.load();
+    const save = Save.data || Save.load();
     game = new Game(save, {
       startWeapon,
       callbacks: {
@@ -128,7 +128,7 @@
     // Delta-Time begrenzen (z. B. wenn Tab im Hintergrund war)
     if (dt > 0.1) dt = 0.1;
 
-    if (game && game.state !== 'dead') {
+    if (game && game.state === 'playing') {
       // Eingabe übertragen
       const k = getKeyboardInput();
       if (touchActive) {
@@ -185,6 +185,8 @@
       HDE.game = game;
     };
     ui.openStartScreen();
+
+    window.addEventListener('beforeunload', () => Save.save());
 
     requestAnimationFrame(gameLoop);
   });

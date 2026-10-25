@@ -164,7 +164,8 @@
       return { rank, entry: record };
     },
 
-    load() {
+    load(force = false) {
+      if (this.data && !force) return this.data;
       let raw = null;
       try {
         const txt = storage.getItem(KEY());
@@ -174,12 +175,17 @@
       return this.data;
     },
 
-    save() {
+    save(target) {
+      if (target && typeof target === 'object') {
+        this.data = target;
+      }
       if (!this.data) return false;
       try {
         storage.setItem(KEY(), JSON.stringify(this.data));
         return true;
-      } catch (e) { return false; }
+      } catch (e) {
+        return false;
+      }
     },
 
     reset() {
