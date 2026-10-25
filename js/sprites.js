@@ -8,6 +8,24 @@
     return c;
   }
 
+  function roundRect(ctx, x, y, w, h, r) {
+    if (ctx.roundRect) {
+      ctx.roundRect(x, y, w, h, r);
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+  }
+
   /** ASCII-Grafik -> Canvas */
   function fromAscii(rows, pal) {
     const h = rows.length, w = rows[0].length;
@@ -52,150 +70,512 @@
     return c;
   }
 
-  /* ------------------------------------------------------------ Egge (Pixel-Art Karikatur) */
-  const EGGE_PAL = {
-    H: '#201b22', h: '#3a323d', S: '#f7cbb0', s: '#dea382', r: '#e88778',
-    G: '#12131a', W: '#ffffff', C: '#a6e2ff', E: '#181a24', M: '#c05050',
-    Y: '#484e5c', y: '#343842', L: '#616a7d', K: '#727c91',
-    P: '#262933', p: '#1c1e26', B: '#101116', '.': null
-  };
-  const EGGE_BODY = [
-    '......hhhhhh........',
-    '....hhHHHHHHHH......',
-    '...hhHHHHHHHHHH.....',
-    '..hHHHHHHHHHHHHH....',
-    '..hHHSSSSSSSSSHH....',
-    '..HHSSSSSSSSSSSH....',
-    '..GGGGGG..GGGGGG....',
-    '..GWCECG..GWCECG....',
-    '..GWWECG..GWWECG....',
-    '..GGGGGG..GGGGGG....',
-    '..sSSSSSSSSSSSSs....',
-    '...sSSrSSSSrSSs.....',
-    '...sSSSSMMSSSSs.....',
-    '....sSSSSSSSSs......',
-    '....KKKKKKKKKK......',
-    '...yLYYYYYYYYYy.....',
-    '..yLYYYYYYYYYYYy....',
-    '..yYYYYYYYYYYYYy....',
-    '..yLLYYYYYYYYLLy....',
-    '...yYYYYYYYYYYy.....',
-  ];
-  const EGGE_LEGS = [
-    [
-      '....PPPP....PPPP....',
-      '....PPPP....PPPP....',
-      '....pppp....pppp....',
-      '....BBBB....BBBB....',
-    ],
-    [
-      '...PPPP......PPPP...',
-      '...PPPP......PPPP...',
-      '...pppp......pppp...',
-      '..BBBB........BBBB..',
-    ],
-  ];
+  /* ------------------------------------------------------------ Chibi Vector-Sprites (wie im Mockup-Foto) */
+  function createEggeSprite(isElite, frame) {
+    const c = mk(36, 44), ctx = c.getContext('2d');
+    const bob = frame === 1 ? 1 : 0;
+    const legOffset = frame === 1 ? 2 : 0;
 
-  /* ------------------------------------------------------------ Mega-Boss Egge */
-  const BOSS_PAL = {
-    H: '#18141a', h: '#2d2530', S: '#f0be9e', s: '#c98a65',
-    G: '#0a0a0f', R: '#ff2030', r: '#ff8090', W: '#ffffff', D: '#2b0a0a',
-    Y: '#3a404c', y: '#262a33', L: '#525a6b', K: '#606a7e',
-    P: '#1e2129', p: '#14161c', B: '#0c0d12', '.': null
-  };
-  const BOSS_BODY = [
-    '.........hhhhHHHHHHHHhhhh.........',
-    '.......hhHHHHHHHHHHHHHHHHhh.......',
-    '......hHHHHHHHHHHHHHHHHHHHHh......',
-    '.....hHHHHHHHHHHHHHHHHHHHHHHh.....',
-    '.....hHHSSSSSSSSSSSSSSSSSSHHh.....',
-    '....hHHSSSSSSSSSSSSSSSSSSSSHHh....',
-    '....GGGGGGGGGGGG....GGGGGGGGGGGG..',
-    '....GGWWrrRRWWGG....GGWWrrRRWWGG..',
-    '....GGWWrrRRWWGG....GGWWrrRRWWGG..',
-    '....GGGGGGGGGGGG....GGGGGGGGGGGG..',
-    '....sSSSSSSSSSSSS..SSSSSSSSSSSSs..',
-    '.....sSSSSSSSSSSSSSSSSSSSSSSSSs...',
-    '.....sSSSsDWDWDWDWDWDWDsSSSSs.....',
-    '......sSSsWDWDWDWDWDWDWsSSs.......',
-    '.......sSSSSSSSSSSSSSSSSs.........',
-    '.......sSSSSsKKKKKKsSSSSs.........',
-    '..yyyy..sSSsKKKKKKKKsSSs..yyyy....',
-    '.yLYYYy..ssKKKKKKKKKKss..yYYYLy...',
-    'yLYYYYYyyyyyyyyyyyyyyyyyyyYYYYLy..',
-    'yLYYYYYYYYYYYYYYYYYYYYYYYYYYYYLy..',
-    'yYYYYLLYYYYYYLLLLYYYYYYLLYYYYYYy..',
-    'yYYYYLLYYYYYYLLLLYYYYYYLLYYYYYYy..',
-    '.yYYYYYYYYYYYYYYYYYYYYYYYYYYYYy...',
-    '.yYYYYLLYYYYYYYYYYYYYYYYLLYYYYy...',
-    '..sssssYYYYYYYYYYYYYYYYYYsssss....',
-    '..sSSSsYYYYYYYYYYYYYYYYYYsSSSs....',
-    '..sSSSsYYYYYYYYYYYYYYYYYYsSSSs....',
-    '...sss..yyyyyyyyyyyyyyyy..sss.....',
-  ];
-  const BOSS_LEGS = [
-    [
-      '.......PPPPPPPP....PPPPPPPP.......',
-      '.......PPPPPPPP....PPPPPPPP.......',
-      '.......pppppppp....pppppppp.......',
-      '.......BBBBBBBB....BBBBBBBB.......',
-      '.......BBBBBBBB....BBBBBBBB.......',
-    ],
-    [
-      '......PPPPPPPP......PPPPPPPP......',
-      '......PPPPPPPP......PPPPPPPP......',
-      '......pppppppp......pppppppp......',
-      '.....BBBBBBBB........BBBBBBBB.....',
-      '.....BBBBBBBB........BBBBBBBB.....',
-    ],
-  ];
+    // 1. Beine & Schuhe
+    ctx.fillStyle = '#232733';
+    ctx.fillRect(12 - legOffset, 32, 4, 7);
+    ctx.fillRect(20 + legOffset, 32, 4, 7);
+    ctx.fillStyle = '#111218';
+    ctx.fillRect(11 - legOffset, 38, 6, 4);
+    ctx.fillRect(19 + legOffset, 38, 6, 4);
 
-  /* ------------------------------------------------------------ Held "Kämpfer" */
-  const HERO_PAL = {
-    H: '#382a20', h: '#4f3d32', G: '#9ca2ad', g: '#c4cad6', b: '#30241c',
-    S: '#f5c6a5', s: '#d99f7d', r: '#e58578', E: '#121216', W: '#ffffff',
-    Y: '#888e99', y: '#6d737e', L: '#a6acb8', Z: '#d2d6de',
-    P: '#2b3a5c', p: '#1d2740', B: '#f0f0f0', O: '#b02020', K: '#18181e',
-    '.': null
-  };
-  const HERO_BODY = [
-    '.....hHHHHHHHHh.......',
-    '....hHHHHgGGHHhH......',
-    '....HHHHGggggGHHH.....',
-    '...hHHHHGgGgGGHHH.....',
-    '..HhSSSSSSSSSSSSHH....',
-    '..GSSSSSSSSSSSSSSG....',
-    '..GSSWEESS..SSWEESG...',
-    '..HSSWEESS..SSWEESH...',
-    '..hSSSSSSSSSSSSSSG....',
-    '...sSSsrrr..rrrSss....',
-    '...sbbSSSSSSSSbbs.....',
-    '....bbbbbbbbbbbb......',
-    '....bbbssssssbbb......',
-    '....yLYYYYYYYYYy......',
-    '...yLYYYZZZZYYYy......',
-    '..yLYYYZYYYYZYYYy.....',
-    '..yYYYYZYYYYZYYYYy....',
-    '..yYYYYZYYYYZYYYYy....',
-    '..yLLYYZYYYYZYYLLy....',
-    '...yYYYYYYYYYYYYy.....',
-  ];
-  const HERO_LEGS = [
-    [
-      '....PPPP....PPPP......',
-      '....PPPP....PPPP......',
-      '....pppp....pppp......',
-      '....BOOB....BOOB......',
-      '....KKKK....KKKK......',
-    ],
-    [
-      '...PPPP......PPPP.....',
-      '...PPPP......PPPP.....',
-      '...pppp......pppp.....',
-      '..BOOB........BOOB....',
-      '..KKKK........KKKK....',
-    ],
-  ];
+    // 2. Körper / Pullover (Dunkelgrauer Rollkragenpulli)
+    const sweaterCol = isElite ? '#e5b020' : '#454b57';
+    const sweaterDark = isElite ? '#b88610' : '#333842';
+
+    // Torso
+    ctx.fillStyle = sweaterCol;
+    roundRect(ctx, 10, 22 + bob, 16, 12, 3);
+    ctx.fill();
+
+    // Ärmel / Arme
+    ctx.fillStyle = sweaterDark;
+    ctx.fillRect(7, 24 + bob, 4, 8);
+    ctx.fillRect(25, 24 + bob, 4, 8);
+    // Hände
+    ctx.fillStyle = '#f7cca6';
+    ctx.beginPath();
+    ctx.arc(8.5, 33 + bob, 2.5, 0, Math.PI * 2);
+    ctx.arc(27.5, 33 + bob, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Rollkragen-Falte unter dem Kinn
+    ctx.fillStyle = isElite ? '#ffd84d' : '#646c7d';
+    roundRect(ctx, 11, 20 + bob, 14, 4, 2);
+    ctx.fill();
+
+    // 3. Chibi-Kopf (Großer runder Kopf, peachy Skin)
+    ctx.fillStyle = '#f7cca6';
+    ctx.beginPath();
+    ctx.arc(18, 14 + bob, 11, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Wangen-Rouge
+    ctx.fillStyle = 'rgba(235, 120, 100, 0.4)';
+    ctx.beginPath();
+    ctx.arc(12, 17 + bob, 2.5, 0, Math.PI * 2);
+    ctx.arc(24, 17 + bob, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Mund (Verschmitztes Grinsen)
+    ctx.strokeStyle = '#a84040';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.arc(18, 17 + bob, 3, 0.1, Math.PI - 0.1);
+    ctx.stroke();
+
+    // 4. Haare (Kurz, dunkel, mit Seitenscheitel)
+    ctx.fillStyle = '#221c25';
+    ctx.beginPath();
+    ctx.arc(18, 13 + bob, 11.2, Math.PI, Math.PI * 2);
+    ctx.lineTo(29, 13 + bob);
+    ctx.lineTo(28, 8 + bob);
+    ctx.quadraticCurveTo(24, 3 + bob, 18, 3 + bob);
+    ctx.quadraticCurveTo(10, 3 + bob, 7, 8 + bob);
+    ctx.lineTo(7, 13 + bob);
+    ctx.closePath();
+    ctx.fill();
+
+    // Haar-Glanzkante
+    ctx.strokeStyle = '#423848';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(18, 6 + bob, 6, Math.PI * 1.1, Math.PI * 1.9);
+    ctx.stroke();
+
+    // Ohren
+    ctx.fillStyle = '#e8a882';
+    ctx.beginPath();
+    ctx.arc(6.5, 14 + bob, 2.5, 0, Math.PI * 2);
+    ctx.arc(29.5, 14 + bob, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // 5. Die markante schwarze Rechteck-Brille!
+    ctx.fillStyle = '#0e0f14';
+    ctx.fillRect(8, 10 + bob, 8, 7);
+    ctx.fillRect(20, 10 + bob, 8, 7);
+    ctx.fillRect(16, 12 + bob, 4, 2);
+    ctx.fillRect(6, 12 + bob, 3, 2);
+    ctx.fillRect(27, 12 + bob, 3, 2);
+
+    // Gläser-Hintergrund
+    ctx.fillStyle = '#1c222e';
+    ctx.fillRect(9.5, 11.5 + bob, 5, 4);
+    ctx.fillRect(21.5, 11.5 + bob, 5, 4);
+
+    // Augen dahinter
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(12, 12.5 + bob, 2, 2.5);
+    ctx.fillRect(24, 12.5 + bob, 2, 2.5);
+    ctx.fillStyle = '#0e0f14';
+    ctx.fillRect(13, 13 + bob, 1.5, 1.5);
+    ctx.fillRect(25, 13 + bob, 1.5, 1.5);
+
+    // Markante weiße Glanz-Reflexionen auf den Brillengläsern (aus dem Bild!)
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(9.5, 11.5 + bob, 2, 1.5);
+    ctx.fillRect(10.5, 12.5 + bob, 1.5, 1.5);
+    ctx.fillRect(21.5, 11.5 + bob, 2, 1.5);
+    ctx.fillRect(22.5, 12.5 + bob, 1.5, 1.5);
+
+    return outline(c, '#0b0c10');
+  }
+
+  function createBossSprite(frame) {
+    const c = mk(104, 120), ctx = c.getContext('2d');
+    const bob = frame === 1 ? 2 : 0;
+    const legOffset = frame === 1 ? 4 : 0;
+
+    // Beine & Stiefel
+    ctx.fillStyle = '#1e222c';
+    ctx.fillRect(36 - legOffset, 88, 12, 22);
+    ctx.fillRect(56 + legOffset, 88, 12, 22);
+    ctx.fillStyle = '#0b0c10';
+    ctx.fillRect(33 - legOffset, 106, 17, 10);
+    ctx.fillRect(54 + legOffset, 106, 17, 10);
+
+    // Nacken / Trapezius
+    ctx.fillStyle = '#c98a65';
+    ctx.beginPath();
+    ctx.moveTo(38, 48 + bob);
+    ctx.lineTo(66, 48 + bob);
+    ctx.lineTo(72, 60 + bob);
+    ctx.lineTo(32, 60 + bob);
+    ctx.closePath();
+    ctx.fill();
+
+    // Breiter Muskel-Torso (Dunkelgrauer Sweatshirt-Look)
+    ctx.fillStyle = '#3a404c';
+    roundRect(ctx, 22, 54 + bob, 60, 38, 8);
+    ctx.fill();
+
+    // Brustmuskel-Schattierung
+    ctx.fillStyle = '#262a33';
+    ctx.fillRect(28, 62 + bob, 22, 16);
+    ctx.fillRect(54, 62 + bob, 22, 16);
+    ctx.fillStyle = '#4e5666';
+    ctx.fillRect(28, 60 + bob, 48, 3);
+
+    // Kräftige Schultern & Oberarme
+    ctx.fillStyle = '#3a404c';
+    ctx.beginPath();
+    ctx.ellipse(18, 62 + bob, 14, 12, 0, 0, Math.PI * 2);
+    ctx.ellipse(86, 62 + bob, 14, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Unterarme
+    ctx.fillStyle = '#2d323c';
+    ctx.fillRect(10, 68 + bob, 14, 22);
+    ctx.fillRect(80, 68 + bob, 14, 22);
+
+    // Geballte Fäuste
+    ctx.fillStyle = '#f0be9e';
+    ctx.beginPath();
+    ctx.arc(17, 94 + bob, 8, 0, Math.PI * 2);
+    ctx.arc(87, 94 + bob, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#c98a65';
+    ctx.fillRect(12, 94 + bob, 9, 3);
+    ctx.fillRect(83, 94 + bob, 9, 3);
+
+    // Kragen
+    ctx.fillStyle = '#545d6e';
+    roundRect(ctx, 36, 52 + bob, 32, 8, 4);
+    ctx.fill();
+
+    // Riesiger wütender Boss-Kopf
+    ctx.fillStyle = '#f0be9e';
+    roundRect(ctx, 28, 12 + bob, 48, 40, 14);
+    ctx.fill();
+
+    // Wangen-Schatten
+    ctx.fillStyle = 'rgba(180, 80, 50, 0.2)';
+    ctx.beginPath();
+    ctx.arc(38, 42 + bob, 7, 0, Math.PI * 2);
+    ctx.arc(66, 42 + bob, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Wütende Ader an der Schläfe
+    ctx.strokeStyle = '#b82030';
+    ctx.lineWidth = 1.8;
+    ctx.beginPath();
+    ctx.moveTo(27, 24 + bob); ctx.lineTo(31, 28 + bob); ctx.lineTo(29, 32 + bob);
+    ctx.stroke();
+
+    // Boss-Haare
+    ctx.fillStyle = '#18141a';
+    ctx.beginPath();
+    ctx.arc(52, 22 + bob, 25, Math.PI, Math.PI * 2);
+    ctx.lineTo(77, 26 + bob);
+    ctx.lineTo(74, 12 + bob);
+    ctx.quadraticCurveTo(52, 4 + bob, 30, 12 + bob);
+    ctx.lineTo(27, 26 + bob);
+    ctx.closePath();
+    ctx.fill();
+
+    // Ohren
+    ctx.fillStyle = '#c98a65';
+    ctx.beginPath();
+    ctx.arc(26, 30 + bob, 4.5, 0, Math.PI * 2);
+    ctx.arc(78, 30 + bob, 4.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Wütende, steil herabfallende Augenbrauen
+    ctx.fillStyle = '#100c14';
+    ctx.beginPath();
+    ctx.moveTo(33, 22 + bob); ctx.lineTo(49, 27 + bob); ctx.lineTo(49, 24 + bob); ctx.lineTo(33, 19 + bob);
+    ctx.moveTo(71, 22 + bob); ctx.lineTo(55, 27 + bob); ctx.lineTo(55, 24 + bob); ctx.lineTo(71, 19 + bob);
+    ctx.fill();
+
+    // Massive schwarze Brille
+    ctx.fillStyle = '#0a0a0f';
+    ctx.fillRect(32, 24 + bob, 18, 14);
+    ctx.fillRect(54, 24 + bob, 18, 14);
+    ctx.fillRect(48, 27 + bob, 8, 4);
+    ctx.fillRect(27, 27 + bob, 6, 3);
+    ctx.fillRect(71, 27 + bob, 6, 3);
+
+    // Gläser
+    ctx.fillStyle = '#22080c';
+    ctx.fillRect(35, 27 + bob, 12, 8);
+    ctx.fillRect(57, 27 + bob, 12, 8);
+
+    // Rot glühende Pupillen (Zorn des Mega-Bosses!)
+    ctx.fillStyle = '#ff2030';
+    ctx.beginPath();
+    ctx.arc(42, 31 + bob, 3.5, 0, Math.PI * 2);
+    ctx.arc(62, 31 + bob, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(41, 30 + bob, 1.2, 0, Math.PI * 2);
+    ctx.arc(61, 30 + bob, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Glanzkanten auf der Brille
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillRect(35, 27 + bob, 4, 2);
+    ctx.fillRect(57, 27 + bob, 4, 2);
+
+    // Zähnefletschender, grimmiger Mund (aus dem Bild!)
+    ctx.fillStyle = '#0a0a0e';
+    roundRect(ctx, 39, 41 + bob, 26, 8, 2);
+    ctx.fill();
+
+    // Weiße Zähne mit Zahnspalten
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(41, 42.5 + bob, 22, 5);
+    ctx.fillStyle = '#1a1014';
+    for (let z = 45; z <= 60; z += 3.5) {
+      ctx.fillRect(z, 42.5 + bob, 1, 5);
+    }
+    ctx.fillRect(41, 45 + bob, 22, 0.8);
+
+    return outline(c, '#090a0d');
+  }
+
+  function createHeroSprite(frame) {
+    const c = mk(40, 48), ctx = c.getContext('2d');
+    const bob = frame === 1 ? 1 : 0;
+    const legOffset = frame === 1 ? 2 : 0;
+
+    // Beine & Sneakers
+    ctx.fillStyle = '#2b3a5c';
+    ctx.fillRect(13 - legOffset, 34, 5, 8);
+    ctx.fillRect(22 + legOffset, 34, 5, 8);
+    ctx.fillStyle = '#f0f0f0';
+    ctx.fillRect(12 - legOffset, 41, 7, 4);
+    ctx.fillRect(21 + legOffset, 41, 7, 4);
+    ctx.fillStyle = '#cc2020';
+    ctx.fillRect(12 - legOffset, 42, 7, 1.2);
+    ctx.fillRect(21 + legOffset, 42, 7, 1.2);
+
+    // Hoodie (Meliertes Grau mit Reißverschluss & weißen Kordeln)
+    ctx.fillStyle = '#787e8c';
+    roundRect(ctx, 11, 23 + bob, 18, 13, 3);
+    ctx.fill();
+
+    ctx.fillStyle = '#626875';
+    ctx.fillRect(11, 33 + bob, 18, 3);
+
+    // Ärmel
+    ctx.fillStyle = '#6a707e';
+    ctx.fillRect(8, 25 + bob, 4, 8);
+    ctx.fillRect(28, 25 + bob, 4, 8);
+
+    // Hände
+    ctx.fillStyle = '#f5c6a5';
+    ctx.beginPath();
+    ctx.arc(9.5, 34 + bob, 2.5, 0, Math.PI * 2);
+    ctx.arc(30.5, 34 + bob, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Silberner Reißverschluss
+    ctx.fillStyle = '#dcdfe6';
+    ctx.fillRect(19.5, 23 + bob, 1.5, 12);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(19, 25 + bob, 2.5, 2.5);
+
+    // Weiße Hoodie-Kordeln
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(16, 24 + bob, 1.2, 7);
+    ctx.fillRect(23, 24 + bob, 1.2, 7);
+
+    // Kopf & Gesicht
+    ctx.fillStyle = '#f5c6a5';
+    ctx.beginPath();
+    ctx.arc(20, 15 + bob, 11, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Bart & Bartschatten (meliert dunkel / grau)
+    ctx.fillStyle = '#382a20';
+    ctx.beginPath();
+    ctx.arc(20, 16.5 + bob, 9.5, 0.2, Math.PI - 0.2);
+    ctx.lineTo(13, 17 + bob);
+    ctx.lineTo(27, 17 + bob);
+    ctx.closePath();
+    ctx.fill();
+
+    // Graue Stoppeln im Bart
+    ctx.fillStyle = '#9ca2ad';
+    ctx.fillRect(15, 21 + bob, 2, 1);
+    ctx.fillRect(23, 21 + bob, 2, 1);
+    ctx.fillRect(19, 23 + bob, 2, 1);
+
+    // Mund
+    ctx.fillStyle = '#b05050';
+    ctx.fillRect(18.5, 21 + bob, 3, 1.2);
+
+    // Augen
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(14, 13 + bob, 3.5, 2.5);
+    ctx.fillRect(22.5, 13 + bob, 3.5, 2.5);
+    ctx.fillStyle = '#15151c';
+    ctx.fillRect(15.5, 13 + bob, 2, 2.5);
+    ctx.fillRect(24, 13 + bob, 2, 2.5);
+
+    // Augenbrauen
+    ctx.strokeStyle = '#2d221a';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(13, 11.5 + bob); ctx.lineTo(18, 13 + bob);
+    ctx.moveTo(27, 11.5 + bob); ctx.lineTo(22, 13 + bob);
+    ctx.stroke();
+
+    // Haare (Meliertes dunkelbraunes Haar)
+    ctx.fillStyle = '#382a20';
+    ctx.beginPath();
+    ctx.arc(20, 13 + bob, 11.5, Math.PI, Math.PI * 2);
+    ctx.lineTo(31, 13 + bob);
+    ctx.lineTo(31, 7 + bob);
+    ctx.quadraticCurveTo(25, 2 + bob, 20, 2 + bob);
+    ctx.quadraticCurveTo(15, 2 + bob, 9, 7 + bob);
+    ctx.lineTo(9, 13 + bob);
+    ctx.closePath();
+    ctx.fill();
+
+    // Graue / Silberne Haar-Strähnen an Schläfen
+    ctx.strokeStyle = '#b8c0cc';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(26, 9 + bob, 3.5, Math.PI * 1.2, Math.PI * 1.8);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(14, 9 + bob, 3.5, Math.PI * 1.2, Math.PI * 1.8);
+    ctx.stroke();
+
+    // Ohren
+    ctx.fillStyle = '#dca080';
+    ctx.beginPath();
+    ctx.arc(8.5, 15 + bob, 2.5, 0, Math.PI * 2);
+    ctx.arc(31.5, 15 + bob, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    return outline(c, '#0d0d12');
+  }
+
+  function drawChicken(ctx, cx, cy) {
+    ctx.fillStyle = '#ffd214';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, 7, 12, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#e82020';
+    ctx.beginPath();
+    ctx.arc(cx - 2, cy - 13, 2.5, 0, Math.PI * 2);
+    ctx.arc(cx + 2, cy - 13, 2.5, 0, Math.PI * 2);
+    ctx.arc(cx, cy - 15, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffd214';
+    ctx.beginPath();
+    ctx.arc(cx, cy - 10, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ff7a14';
+    ctx.beginPath();
+    ctx.moveTo(cx - 3, cy - 10);
+    ctx.lineTo(cx, cy - 13);
+    ctx.lineTo(cx + 3, cy - 10);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath();
+    ctx.arc(cx - 2.5, cy - 10, 2, 0, Math.PI * 2);
+    ctx.arc(cx + 2.5, cy - 10, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#101014';
+    ctx.beginPath();
+    ctx.arc(cx - 2.5, cy - 10, 1, 0, Math.PI * 2);
+    ctx.arc(cx + 2.5, cy - 10, 1, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ff9a14';
+    ctx.fillRect(cx - 3, cy + 10, 2, 6);
+    ctx.fillRect(cx + 1, cy + 10, 2, 6);
+    ctx.fillRect(cx - 5, cy + 15, 4, 2);
+    ctx.fillRect(cx + 1, cy + 15, 4, 2);
+  }
+
+  function buildWeapons() {
+    // 1. Holzhammer
+    const mc = mk(40, 40), mx = mc.getContext('2d');
+    mx.fillStyle = '#6e441f';
+    mx.fillRect(18, 14, 4, 24);
+    mx.fillStyle = '#4a2c12';
+    mx.fillRect(21, 14, 1, 24);
+    mx.fillStyle = '#b87e38';
+    roundRect(mx, 8, 4, 24, 13, 3);
+    mx.fill();
+    mx.fillStyle = '#3a2614';
+    mx.fillRect(11, 4, 2, 13);
+    mx.fillRect(27, 4, 2, 13);
+    mx.fillStyle = 'rgba(255,255,255,0.4)';
+    mx.fillRect(9, 5, 22, 1.5);
+
+    // 2. Bratpfanne
+    const pc = mk(36, 36), px = pc.getContext('2d');
+    px.fillStyle = '#22232a';
+    px.fillRect(16, 17, 4, 16);
+    px.fillStyle = '#1a1b22';
+    px.beginPath();
+    px.arc(18, 11, 9.5, 0, Math.PI * 2);
+    px.fill();
+    px.fillStyle = '#2c2e3a';
+    px.beginPath();
+    px.arc(18, 11, 7.5, 0, Math.PI * 2);
+    px.fill();
+    px.strokeStyle = 'rgba(255,255,255,0.4)';
+    px.lineWidth = 1.2;
+    px.beginPath();
+    px.arc(18, 11, 8.5, Math.PI * 0.7, Math.PI * 1.3);
+    px.stroke();
+
+    // 3. Gummihuhn
+    const cc = mk(36, 40), cx = cc.getContext('2d');
+    drawChicken(cx, 18, 19);
+
+    // 4. Toaster
+    const tc = mk(32, 32), tx = tc.getContext('2d');
+    tx.fillStyle = '#adb3c2';
+    roundRect(tx, 4, 8, 24, 18, 3);
+    tx.fill();
+    tx.fillStyle = '#e2e6ef';
+    tx.fillRect(5, 9, 22, 2);
+    tx.fillStyle = '#343842';
+    tx.fillRect(8, 6, 7, 3);
+    tx.fillRect(17, 6, 7, 3);
+    tx.fillStyle = '#d49b28';
+    tx.fillRect(9, 3, 5, 4);
+    tx.fillRect(18, 3, 5, 4);
+    tx.fillStyle = '#505664';
+    tx.fillRect(25, 14, 4, 6);
+
+    // 5. Banane
+    const bc = mk(32, 32), bx = bc.getContext('2d');
+    bx.fillStyle = '#ffd200';
+    bx.beginPath();
+    bx.arc(16, 16, 12, Math.PI * 0.1, Math.PI * 0.9);
+    bx.quadraticCurveTo(16, 20, 24, 12);
+    bx.closePath();
+    bx.fill();
+    bx.fillStyle = '#5c3a10';
+    bx.fillRect(6, 18, 3, 2);
+
+    return {
+      mallet: outline(mc, '#0a0a0f'),
+      pan: outline(pc, '#0a0a0f'),
+      chicken: outline(cc, '#0a0a0f'),
+      toaster: outline(tc, '#0a0a0f'),
+      banana: outline(bc, '#0a0a0f'),
+    };
+  }
 
   /* ------------------------------------------------------------ Kiff-Gegenstände (8x8) */
   const ITEMS = {
@@ -314,6 +694,153 @@
 
   function recolor(pal, map) { return Object.assign({}, pal, map); }
 
+  /** Zirkuszelt-Dach mit radialen Streifen und weißem Fransen-Saum (aus Mockup-Foto) */
+  function drawTentRoof(ctx, cx, cy, colors, angle) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(angle);
+
+    const R = 320;
+    const stripes = 8;
+    const wedgeAngle = (Math.PI / 2) / stripes;
+
+    for (let i = 0; i < stripes; i++) {
+      ctx.fillStyle = colors[i % colors.length];
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, R, i * wedgeAngle, (i + 1) * wedgeAngle);
+      ctx.closePath();
+      ctx.fill();
+
+      // Schattierung
+      ctx.fillStyle = 'rgba(0,0,0,0.14)';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.arc(0, 0, R, (i + 0.82) * wedgeAngle, (i + 1) * wedgeAngle);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Weißer gewellter Baldachin-Saum (Zirkus-Fransen)
+    const scallops = 10;
+    const scAngle = (Math.PI / 2) / scallops;
+    ctx.fillStyle = '#ffffff';
+    for (let s = 0; s < scallops; s++) {
+      const midA = (s + 0.5) * scAngle;
+      const fx = Math.cos(midA) * R;
+      const fy = Math.sin(midA) * R;
+      ctx.beginPath();
+      ctx.arc(fx, fy, 13, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Saum-Kante
+    ctx.strokeStyle = '#201014';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(0, 0, R + 3, 0, Math.PI / 2);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  /** Zuschauer-Egges in den Jahrmarkts-Buden am oberen Rand */
+  function drawCarnivalBooths(ctx, time) {
+    const boothY = -380;
+    const boothW = 1300;
+    // Holzwand
+    ctx.fillStyle = '#4e3016';
+    ctx.fillRect(-boothW / 2, boothY - 60, boothW, 55);
+    // Theke
+    ctx.fillStyle = '#7a4e25';
+    ctx.fillRect(-boothW / 2, boothY - 10, boothW, 14);
+    ctx.fillStyle = '#261608';
+    ctx.fillRect(-boothW / 2, boothY + 4, boothW, 4);
+
+    // Zuschauer-Egges an der Theke
+    const eggeSprite = S.egge && S.egge.normal ? S.egge.normal[0] : null;
+    if (eggeSprite) {
+      for (let bx = -560; bx <= 560; bx += 70) {
+        const bob = Math.sin(time * 3 + bx) * 2;
+        ctx.save();
+        ctx.translate(bx, boothY - 20 + bob);
+        ctx.scale(0.8, 0.8);
+        ctx.drawImage(eggeSprite, -eggeSprite.width / 2, -eggeSprite.height / 2);
+        ctx.restore();
+      }
+    }
+  }
+
+  /** Zirkus-Wimpelgirlanden & Pfosten rund um die Arena */
+  function drawArenaRope(ctx, time) {
+    const poles = 16;
+    const rx = 740, ry = 480;
+    const colors = ['#e6283b', '#ffcc00', '#1894d8', '#2cd860'];
+
+    for (let i = 0; i < poles; i++) {
+      const a1 = (i / poles) * Math.PI * 2;
+      const a2 = ((i + 1) / poles) * Math.PI * 2;
+      const x1 = Math.cos(a1) * rx, y1 = Math.sin(a1) * ry;
+      const x2 = Math.cos(a2) * rx, y2 = Math.sin(a2) * ry;
+
+      // Zirkus-Masten
+      ctx.fillStyle = '#3a220f';
+      ctx.fillRect(x1 - 3, y1 - 24, 6, 28);
+      ctx.fillStyle = '#ffcc22';
+      ctx.beginPath();
+      ctx.arc(x1, y1 - 24, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Hängendes Seil
+      const midX = (x1 + x2) / 2;
+      const midY = (y1 + y2) / 2 + 18;
+      ctx.strokeStyle = '#26150a';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(x1, y1 - 20);
+      ctx.quadraticCurveTo(midX, midY - 20, x2, y2 - 20);
+      ctx.stroke();
+
+      // Dreiecks-Wimpel
+      const flags = 5;
+      for (let f = 1; f < flags; f++) {
+        const t = f / flags;
+        const fx = (1 - t) * (1 - t) * x1 + 2 * (1 - t) * t * midX + t * t * x2;
+        const fy = (1 - t) * (1 - t) * (y1 - 20) + 2 * (1 - t) * t * (midY - 20) + t * t * (y2 - 20);
+        const col = colors[(i * 3 + f) % colors.length];
+        const sway = Math.sin(time * 2.5 + i + f) * 1.5;
+
+        ctx.fillStyle = col;
+        ctx.beginPath();
+        ctx.moveTo(fx - 4, fy);
+        ctx.lineTo(fx + 4, fy);
+        ctx.lineTo(fx + sway, fy + 12);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+  }
+
+  S.drawArenaScenery = function (ctx, time = 0) {
+    ctx.save();
+    // 1. Zirkuszelt-Dächer in den 4 Ecken (wie auf dem Mockup-Foto!)
+    // Unten-Links: Rot & Türkis
+    drawTentRoof(ctx, -740, 440, ['#cf2234', '#15969a'], -Math.PI / 2);
+    // Unten-Rechts: Gelb & Blau
+    drawTentRoof(ctx, 740, 440, ['#f7c818', '#1b50b8'], Math.PI);
+    // Oben-Links: Lila & Gold
+    drawTentRoof(ctx, -740, -440, ['#842db8', '#dfa824'], 0);
+    // Oben-Rechts: Rot & Blau
+    drawTentRoof(ctx, 740, -440, ['#cf2234', '#1b50b8'], Math.PI / 2);
+
+    // 2. Jahrmarkts-Buden & Zuschauer am oberen Rand
+    drawCarnivalBooths(ctx, time);
+
+    // 3. Wimpelgirlande entlang des Arena-Rings
+    drawArenaRope(ctx, time);
+    ctx.restore();
+  };
+
   S.init = function (photos, usePhotos) {
     S.photos = photos || { egge: null, hero: null };
     S.photoMode = !!(usePhotos && photos && photos.egge && photos.hero && photos.egge.complete && photos.hero.complete && photos.egge.naturalWidth);
@@ -325,15 +852,19 @@
         heroHead = makePhotoHead(photos.hero, 130, 110, 440);
       } catch (e) { S.photoMode = false; }
     }
+
     S.egge = {};
-    S.egge.normal = buildBody(EGGE_BODY, EGGE_LEGS, EGGE_PAL, eggeHead);
-    S.egge.gold = buildBody(EGGE_BODY, EGGE_LEGS, recolor(EGGE_PAL, { Y: '#e8b82a', y: '#b88a1a', L: '#ffe066', K: '#fff0a0', P: '#a87a1a' }), eggeHead);
+    S.egge.normal = [createEggeSprite(false, 0), createEggeSprite(false, 1)];
+    S.egge.gold = [createEggeSprite(true, 0), createEggeSprite(true, 1)];
+
     // Dedizierter Mega-Boss mit breiten Schultern, bösem Blick & Zähnefletschen
-    S.boss = buildBody(BOSS_BODY, BOSS_LEGS, BOSS_PAL, eggeHead);
+    S.boss = [createBossSprite(0), createBossSprite(1)];
     S.egge.boss = S.boss;
 
-    S.hero = buildBody(HERO_BODY, HERO_LEGS, HERO_PAL, heroHead);
+    S.hero = [createHeroSprite(0), createHeroSprite(1)];
     S.heroBase = S.hero[0];
+
+    S.weapons = buildWeapons();
 
     S.items = {};
     for (const k in ITEMS) S.items[k] = outline(fromAscii(ITEMS[k].rows, ITEMS[k].pal));

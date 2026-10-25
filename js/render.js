@@ -83,18 +83,18 @@
       ctx.fillStyle = pat;
       ctx.fillRect(left - 32, top - 32, (right - left) + 64, (bottom - top) + 64);
 
-      // Jahrmarkt-Zentralmedaillon & Zirkus-Wimpel
-      if (biomeIdx === 0 && Sprites.drawCenterMedallion) {
-        if (right > -250 && left < 250 && bottom > -250 && top < 250) {
+      // Jahrmarkt-Zentralmedaillon & Zirkus-Kulisse (Dächer, Buden, Wimpel)
+      if (biomeIdx === 0) {
+        if (Sprites.drawCenterMedallion) {
           Sprites.drawCenterMedallion(ctx, 0, 0, game.time);
         }
-        if (Sprites.drawBunting) {
-          Sprites.drawBunting(ctx, game.time);
+        if (Sprites.drawArenaScenery) {
+          Sprites.drawArenaScenery(ctx, game.time);
         }
+      } else {
+        // Grasflecken nur in anderen Biomen
+        this.renderGrassPatches(ctx, game, left, top, right, bottom);
       }
-
-      // Grasflecken (Weed Spots)
-      this.renderGrassPatches(ctx, game, left, top, right, bottom);
 
       // Zonen am Boden (Rauch, Bongwasser, Bananenschalen, Schwerkraft)
       this.renderZones(ctx, game);
@@ -299,7 +299,7 @@
         ctx.scale(flip, 1);
 
         // Skalierung je nach Egge-Größe (Boss / Elite / Normal)
-        const baseScale = e.boss ? (e.mega ? 2.8 : 2.2) : e.scale * 1.25;
+        const baseScale = e.boss ? (e.mega ? 1.25 : 1.05) : e.scale * 0.82;
         const bob = Math.sin(e.anim * 8) * 1.5;
 
         // Status: Chillen im Gras -> Grünes Wölkchen & friedlicher Bob
@@ -381,7 +381,7 @@
         sprite = Sprites.flash(sprite, '#ff4a4a');
       }
 
-      const scale = 1.45;
+      const scale = 0.95;
       const sw = sprite.width * scale;
       const sh = sprite.height * scale;
       const bob = p.moving ? Math.sin(p.anim * 8) * 1.5 : 0;
@@ -446,25 +446,25 @@
         ctx.restore();
       }
 
-      // 2. Orbit-Schlagstöcke mit dynamischen Schwung-Schweifen
+      // 2. Orbit-Schlagstöcke / Holzhammer mit dynamischem Cartoon-Schwung-Schweif
       const baton = game.getWeapon('baton');
       if (baton && baton.pos) {
         for (const pos of baton.pos) {
-          // Dynamischer Schwung-Schweif (Swoosh Arc)
+          // Breiter leuchtender Schwung-Schweif (Swoosh Arc)
           const orbitR = Math.hypot(pos.x - p.x, pos.y - p.y);
           if (orbitR > 10) {
             ctx.save();
-            ctx.lineWidth = 3.5;
+            ctx.lineWidth = 5.5;
             const swooshGrad = ctx.createLinearGradient(
-              pos.x - Math.cos(pos.a) * 35, pos.y - Math.sin(pos.a) * 35,
+              pos.x - Math.cos(pos.a) * 45, pos.y - Math.sin(pos.a) * 45,
               pos.x, pos.y
             );
-            swooshGrad.addColorStop(0, 'rgba(255, 235, 120, 0)');
-            swooshGrad.addColorStop(0.7, 'rgba(255, 245, 180, 0.55)');
+            swooshGrad.addColorStop(0, 'rgba(255, 255, 255, 0)');
+            swooshGrad.addColorStop(0.5, 'rgba(255, 245, 180, 0.6)');
             swooshGrad.addColorStop(1, 'rgba(255, 255, 255, 0.95)');
             ctx.strokeStyle = swooshGrad;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, orbitR, pos.a - 0.55, pos.a);
+            ctx.arc(p.x, p.y, orbitR, pos.a - 0.75, pos.a);
             ctx.stroke();
             ctx.restore();
           }
@@ -472,8 +472,14 @@
           ctx.save();
           ctx.translate(pos.x, pos.y);
           ctx.rotate(pos.a + Math.PI / 2);
-          const sz = baton.stats.size * 2.2;
-          ctx.drawImage(Sprites.emoji('🦯', Math.round(sz)), -sz / 2, -sz / 2, sz, sz);
+          const mallet = Sprites.weapons && Sprites.weapons.mallet;
+          if (mallet) {
+            const sz = baton.stats.size * 2.6;
+            ctx.drawImage(mallet, -sz / 2, -sz / 2, sz, sz);
+          } else {
+            const sz = baton.stats.size * 2.2;
+            ctx.drawImage(Sprites.emoji('🦯', Math.round(sz)), -sz / 2, -sz / 2, sz, sz);
+          }
           ctx.restore();
         }
       }
