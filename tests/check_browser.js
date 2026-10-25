@@ -196,6 +196,38 @@ server.listen(PORT, async () => {
                   if (!isCentered || !isAtBottom || !xpAboveItems || !itemsAboveHp || elementsOverlap) {
                     throw new Error('HUD positioning error: centered=' + isCentered + ', atBottom=' + isAtBottom + ', xpAbove=' + xpAboveItems + ', itemsAbove=' + itemsAboveHp + ', elementsOverlap=' + elementsOverlap);
                   }
+
+                  // Teste Rückkehr von Perks/Skilltree zum Todesbildschirm (Niemals feststecken!)
+                  const uiInst = window.HDE.ui;
+                  document.getElementById('btn-death-perks').click();
+                  const perksActive = uiInst.dom.perksScreen.classList.contains('active');
+                  const deathHidden1 = !uiInst.dom.deathScreen.classList.contains('active');
+                  console.log('Perks opened from Death screen: ' + (perksActive && deathHidden1));
+
+                  document.getElementById('btn-perks-back').click();
+                  const deathRestored1 = uiInst.dom.deathScreen.classList.contains('active');
+                  const perksClosed = !uiInst.dom.perksScreen.classList.contains('active');
+                  console.log('Death screen restored after Perks Zurück: ' + (deathRestored1 && perksClosed));
+
+                  document.getElementById('btn-death-tree').click();
+                  const treeActive = uiInst.dom.skilltreeScreen.classList.contains('active');
+                  console.log('Skilltree opened from Death screen: ' + treeActive);
+
+                  // ESC Taste schließt Skilltree und stellt Death Screen wieder her
+                  window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+                  const deathRestored2 = uiInst.dom.deathScreen.classList.contains('active');
+                  const treeClosed = !uiInst.dom.skilltreeScreen.classList.contains('active');
+                  console.log('Death screen restored after ESC in Skilltree: ' + (deathRestored2 && treeClosed));
+
+                  // Hauptmenü-Button im Todesbildschirm
+                  document.getElementById('btn-death-menu').click();
+                  const startActive = uiInst.dom.startScreen.classList.contains('active');
+                  const deathClosed = !uiInst.dom.deathScreen.classList.contains('active');
+                  console.log('Start menu opened from Death screen: ' + (startActive && deathClosed));
+
+                  if (!deathRestored1 || !deathRestored2 || !startActive) {
+                    throw new Error('Screen navigation failed after death!');
+                  }
                 `
               });
               setTimeout(resolve, 1500);

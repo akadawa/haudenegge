@@ -369,9 +369,84 @@
       this.toast(res.rank ? `Platz #${res.rank} eingetragen!` : 'Score erfasst!');
     }
 
+    /* ------------------------------------------------------------ Subscreen Navigation */
+    openSubscreen(screenName) {
+      if (this.dom.deathScreen && this.dom.deathScreen.classList.contains('active')) {
+        this.returnScreen = 'death';
+        this.dom.deathScreen.classList.remove('active');
+      } else if (this.dom.pauseScreen && this.dom.pauseScreen.classList.contains('active')) {
+        this.returnScreen = 'pause';
+        this.dom.pauseScreen.classList.remove('active');
+      } else if (this.dom.startScreen && this.dom.startScreen.classList.contains('active')) {
+        this.returnScreen = 'start';
+        this.dom.startScreen.classList.remove('active');
+      } else if (this.game && (this.game.state === 'dead' || this.game.state === 'gameover')) {
+        this.returnScreen = 'death';
+      } else {
+        this.returnScreen = 'start';
+      }
+
+      if (screenName === 'skilltree') {
+        this.dom.skilltreeScreen.classList.add('active');
+        this.renderSkilltree();
+      } else if (screenName === 'perks') {
+        this.dom.perksScreen.classList.add('active');
+        this.renderPerks();
+      } else if (screenName === 'highscores') {
+        this.dom.highscoresScreen.classList.add('active');
+        this.renderHighscores();
+      } else if (screenName === 'settings') {
+        this.dom.settingsScreen.classList.add('active');
+        if (this.dom.sfxToggle) this.dom.sfxToggle.checked = this.save.settings.sound !== false;
+        if (this.dom.musicToggle) this.dom.musicToggle.checked = this.save.settings.music !== false;
+        if (this.dom.photoToggle) this.dom.photoToggle.checked = this.save.settings.photo === true;
+        if (this.dom.saveExportBox) this.dom.saveExportBox.value = Save.exportCode();
+      }
+    }
+
+    closeSubscreen(screenName) {
+      if (screenName === 'skilltree' && this.dom.skilltreeScreen) this.dom.skilltreeScreen.classList.remove('active');
+      else if (screenName === 'perks' && this.dom.perksScreen) this.dom.perksScreen.classList.remove('active');
+      else if (screenName === 'highscores' && this.dom.highscoresScreen) this.dom.highscoresScreen.classList.remove('active');
+      else if (screenName === 'settings' && this.dom.settingsScreen) this.dom.settingsScreen.classList.remove('active');
+
+      if (this.returnScreen === 'death') {
+        if (this.dom.deathScreen) this.dom.deathScreen.classList.add('active');
+      } else if (this.returnScreen === 'pause') {
+        if (this.dom.pauseScreen) this.dom.pauseScreen.classList.add('active');
+      } else {
+        if (this.dom.startScreen) this.dom.startScreen.classList.add('active');
+      }
+    }
+
+    goToMainMenu() {
+      if (this.dom.deathScreen) this.dom.deathScreen.classList.remove('active');
+      if (this.dom.pauseScreen) this.dom.pauseScreen.classList.remove('active');
+      if (this.dom.skilltreeScreen) this.dom.skilltreeScreen.classList.remove('active');
+      if (this.dom.perksScreen) this.dom.perksScreen.classList.remove('active');
+      if (this.dom.highscoresScreen) this.dom.highscoresScreen.classList.remove('active');
+      if (this.dom.settingsScreen) this.dom.settingsScreen.classList.remove('active');
+      if (this.dom.levelUpScreen) this.dom.levelUpScreen.classList.remove('active');
+
+      this.returnScreen = 'start';
+      if (this.dom.startScreen) this.dom.startScreen.classList.add('active');
+    }
+
+    startGameFromAnywhere() {
+      if (this.dom.startScreen) this.dom.startScreen.classList.remove('active');
+      if (this.dom.deathScreen) this.dom.deathScreen.classList.remove('active');
+      if (this.dom.pauseScreen) this.dom.pauseScreen.classList.remove('active');
+      if (this.dom.skilltreeScreen) this.dom.skilltreeScreen.classList.remove('active');
+      if (this.dom.perksScreen) this.dom.perksScreen.classList.remove('active');
+      if (this.dom.highscoresScreen) this.dom.highscoresScreen.classList.remove('active');
+      if (this.dom.settingsScreen) this.dom.settingsScreen.classList.remove('active');
+      if (this.dom.levelUpScreen) this.dom.levelUpScreen.classList.remove('active');
+
+      if (this.onStartGame) this.onStartGame(this.selectedStartWeapon);
+    }
+
     openHighscores() {
-      this.dom.highscoresScreen.classList.add('active');
-      this.renderHighscores();
+      this.openSubscreen('highscores');
     }
 
     renderHighscores() {
@@ -411,8 +486,7 @@
 
     /* ------------------------------------------------------------ Meta Skilltree */
     openSkilltree() {
-      this.dom.skilltreeScreen.classList.add('active');
-      this.renderSkilltree();
+      this.openSubscreen('skilltree');
     }
 
     renderSkilltree() {
@@ -473,8 +547,7 @@
 
     /* ------------------------------------------------------------ Perk-Auswahl Screen */
     openPerks() {
-      this.dom.perksScreen.classList.add('active');
-      this.renderPerks();
+      this.openSubscreen('perks');
     }
 
     renderPerks() {
@@ -656,24 +729,21 @@
     bindEvents() {
       // Start-Button
       document.getElementById('btn-play').onclick = () => {
-        this.dom.startScreen.classList.remove('active');
-        if (this.onStartGame) this.onStartGame(this.selectedStartWeapon);
+        this.startGameFromAnywhere();
       };
 
-      // Highscores-Button im Start- und Todesbildschirm
-      const openScores = () => this.openHighscores();
+      // Highscores-Buttons
       const btnHighscores = document.getElementById('btn-highscores');
-      if (btnHighscores) btnHighscores.onclick = openScores;
+      if (btnHighscores) btnHighscores.onclick = () => this.openSubscreen('highscores');
 
       const btnDeathHighscores = document.getElementById('btn-death-highscores');
-      if (btnDeathHighscores) btnDeathHighscores.onclick = openScores;
+      if (btnDeathHighscores) btnDeathHighscores.onclick = () => this.openSubscreen('highscores');
 
       const btnHighscoresBack = document.getElementById('btn-highscores-back');
-      if (btnHighscoresBack) {
-        btnHighscoresBack.onclick = () => {
-          this.dom.highscoresScreen.classList.remove('active');
-        };
-      }
+      if (btnHighscoresBack) btnHighscoresBack.onclick = () => this.closeSubscreen('highscores');
+
+      const btnHighscoresPlay = document.getElementById('btn-highscores-play');
+      if (btnHighscoresPlay) btnHighscoresPlay.onclick = () => this.startGameFromAnywhere();
 
       // Highscore Eintragen Button & Enter-Taste
       if (this.dom.submitHighscoreBtn) {
@@ -688,33 +758,34 @@
         });
       }
 
-      // Skilltree-Button im Start- und Todesbildschirm
-      const openTree = () => this.openSkilltree();
-      document.getElementById('btn-skilltree').onclick = openTree;
-      document.getElementById('btn-death-tree').onclick = () => {
-        this.hideDeathScreen();
-        openTree();
-      };
-      document.getElementById('btn-tree-back').onclick = () => {
-        this.dom.skilltreeScreen.classList.remove('active');
-      };
+      // Skilltree-Buttons
+      document.getElementById('btn-skilltree').onclick = () => this.openSubscreen('skilltree');
+      const btnDeathTree = document.getElementById('btn-death-tree');
+      if (btnDeathTree) btnDeathTree.onclick = () => this.openSubscreen('skilltree');
 
-      // Perks-Button
-      const openPerks = () => this.openPerks();
-      document.getElementById('btn-perks').onclick = openPerks;
-      document.getElementById('btn-death-perks').onclick = () => {
-        this.hideDeathScreen();
-        openPerks();
-      };
-      document.getElementById('btn-perks-back').onclick = () => {
-        this.dom.perksScreen.classList.remove('active');
-      };
+      const btnTreeBack = document.getElementById('btn-tree-back');
+      if (btnTreeBack) btnTreeBack.onclick = () => this.closeSubscreen('skilltree');
 
-      // Nochmal spielen
-      document.getElementById('btn-death-restart').onclick = () => {
-        this.hideDeathScreen();
-        if (this.onStartGame) this.onStartGame(this.selectedStartWeapon);
-      };
+      const btnTreePlay = document.getElementById('btn-tree-play');
+      if (btnTreePlay) btnTreePlay.onclick = () => this.startGameFromAnywhere();
+
+      // Perks-Buttons
+      document.getElementById('btn-perks').onclick = () => this.openSubscreen('perks');
+      const btnDeathPerks = document.getElementById('btn-death-perks');
+      if (btnDeathPerks) btnDeathPerks.onclick = () => this.openSubscreen('perks');
+
+      const btnPerksBack = document.getElementById('btn-perks-back');
+      if (btnPerksBack) btnPerksBack.onclick = () => this.closeSubscreen('perks');
+
+      const btnPerksPlay = document.getElementById('btn-perks-play');
+      if (btnPerksPlay) btnPerksPlay.onclick = () => this.startGameFromAnywhere();
+
+      // Todesbildschirm: Nochmal spielen & Hauptmenü
+      const btnDeathRestart = document.getElementById('btn-death-restart');
+      if (btnDeathRestart) btnDeathRestart.onclick = () => this.startGameFromAnywhere();
+
+      const btnDeathMenu = document.getElementById('btn-death-menu');
+      if (btnDeathMenu) btnDeathMenu.onclick = () => this.goToMainMenu();
 
       // Level-Up Buttons (Reroll)
       if (this.dom.rerollBtn) {
@@ -738,24 +809,42 @@
         }
       });
 
-      // ESC Taste für Pause & Menü schließen
+      // ESC Taste für Pause, Zurück & Menü-Rettung (Niemals feststecken!)
       window.addEventListener('keydown', e => {
         if (e.key === 'Escape') {
-          if (this.dom.pauseScreen && this.dom.pauseScreen.classList.contains('active')) {
+          if (this.dom.skilltreeScreen && this.dom.skilltreeScreen.classList.contains('active')) {
+            this.closeSubscreen('skilltree');
+          } else if (this.dom.perksScreen && this.dom.perksScreen.classList.contains('active')) {
+            this.closeSubscreen('perks');
+          } else if (this.dom.highscoresScreen && this.dom.highscoresScreen.classList.contains('active')) {
+            this.closeSubscreen('highscores');
+          } else if (this.dom.settingsScreen && this.dom.settingsScreen.classList.contains('active')) {
+            this.closeSubscreen('settings');
+          } else if (this.dom.pauseScreen && this.dom.pauseScreen.classList.contains('active')) {
             this.resumeGame();
           } else if (this.game && this.game.state === 'playing') {
             this.pauseGame();
-          } else if (this.dom.settingsScreen && this.dom.settingsScreen.classList.contains('active')) {
-            this.dom.settingsScreen.classList.remove('active');
-          } else if (this.dom.highscoresScreen && this.dom.highscoresScreen.classList.contains('active')) {
-            this.dom.highscoresScreen.classList.remove('active');
-          } else if (this.dom.skilltreeScreen && this.dom.skilltreeScreen.classList.contains('active')) {
-            this.dom.skilltreeScreen.classList.remove('active');
-          } else if (this.dom.perksScreen && this.dom.perksScreen.classList.contains('active')) {
-            this.dom.perksScreen.classList.remove('active');
+          } else if (this.game && (this.game.state === 'dead' || this.game.state === 'gameover')) {
+            // Wenn Spieler tot ist und kein Screen offen ist: Death-Screen wiederherstellen!
+            if (this.dom.deathScreen) this.dom.deathScreen.classList.add('active');
+          } else if (!document.querySelector('.overlay-screen.active')) {
+            // Wenn gar kein Menü aktiv ist: Hauptmenü öffnen
+            this.goToMainMenu();
           }
         }
       });
+
+      // Klick auf Canvas wenn tot reaktiviert Death-Screen falls geschlossen
+      const canvas = document.getElementById('gameCanvas');
+      if (canvas) {
+        canvas.addEventListener('click', () => {
+          if (this.game && (this.game.state === 'dead' || this.game.state === 'gameover')) {
+            if (!document.querySelector('.overlay-screen.active')) {
+              if (this.dom.deathScreen) this.dom.deathScreen.classList.add('active');
+            }
+          }
+        });
+      }
 
       // Pause-Screen Buttons & HUD-Pause Button
       if (this.dom.hudPauseBtn) {
@@ -815,15 +904,11 @@
 
       // Settings
       document.getElementById('btn-settings').onclick = () => {
-        this.dom.settingsScreen.classList.add('active');
-        this.dom.sfxToggle.checked = this.save.settings.sound !== false;
-        this.dom.musicToggle.checked = this.save.settings.music !== false;
-        this.dom.photoToggle.checked = this.save.settings.photo === true;
-        this.dom.saveExportBox.value = Save.exportCode();
+        this.openSubscreen('settings');
       };
 
       document.getElementById('btn-settings-back').onclick = () => {
-        this.dom.settingsScreen.classList.remove('active');
+        this.closeSubscreen('settings');
       };
 
       this.dom.sfxToggle.onchange = e => {
