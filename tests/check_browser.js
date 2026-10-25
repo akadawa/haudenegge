@@ -118,6 +118,14 @@ server.listen(PORT, async () => {
                 window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
                 const resumed = !ui.dom.pauseScreen.classList.contains('active') && (game.state === 'playing');
                 console.log('Resumed on second ESC: ' + resumed);
+
+                // Teste Sirenen-Waffe und Skalierung im echten Canvas
+                game.addWeapon('siren', 1);
+                const rInit = game.getWeapon('siren').stats.range;
+                game.passives['megaphone'] = 3;
+                game.recompute();
+                const rBoost = game.getWeapon('siren').stats.range;
+                console.log('Siren range scales in browser: ' + (rBoost > rInit) + ' (' + rInit + ' -> ' + rBoost + ')');
               `
             });
 

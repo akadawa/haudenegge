@@ -33,94 +33,94 @@
     };
   }
 
-  /* ---------------------------------------------------------------- Waffen */
+  /* ---------------------------------------------------------------- Waffen (Polizei-Utilities & Ordnungsausrüstung) */
   const DEF_LEVELS = [{ count: 1 }, { dmg: 0.25 }, { cd: -0.12 }, { count: 1 }, { area: 0.15 }, { dmg: 0.25 }, { count: 1 }];
 
   const WEAPONS = {
-    hammer: {
-      name: 'Riesenhammer', icon: '🔨', unlock: 0, kind: 'orbit', countLabel: 'Hammer',
-      desc: 'Kreist um dich und haut alles weg.',
-      base: { dmg: 8, cd: 0, count: 1, speed: 2.8, range: 64, size: 17, hitCd: 0.5, kb: 170 },
+    baton: {
+      name: 'Einsatz-Schlagstock', icon: '🦯', unlock: 0, kind: 'orbit', countLabel: 'Schlagstock',
+      desc: 'Kreist um dich und schlägt Egges mit Wucht zurück.',
+      base: { dmg: 9, cd: 0, count: 1, speed: 3.0, range: 66, size: 18, hitCd: 0.45, kb: 180 },
       levels: [{ count: 1 }, { dmg: 0.3 }, { area: 0.15 }, { count: 1 }, { dmg: 0.3 }, { speed: 0.15 }, { count: 1 }],
-      evo: { passive: 'glove', name: 'Weltenhammer', desc: 'Mehr Hammer, mehr Wumms.' },
+      evo: { passive: 'vest', name: 'Titan-Tonfa', desc: 'Schwere Riot-Tonfa mit Schockwellen bei Treffern.' },
     },
-    pan: {
-      name: 'Fliegende Bratpfanne', icon: '🍳', unlock: 0, kind: 'ricochet', countLabel: 'Pfanne',
-      desc: 'Prallt von Egge zu Egge.',
-      base: { dmg: 12, cd: 1.6, count: 1, speed: 330, size: 13, bounces: 3, life: 2.6 },
+    taser: {
+      name: 'Dienst-Taser', icon: '⚡', unlock: 0, kind: 'taser', countLabel: 'Lichtbogen',
+      desc: 'Verschießt Elektroschocks, die auf nahe Egges überspringen und sie lähmen.',
+      base: { dmg: 13, cd: 1.4, count: 1, chain: 2, range: 250, stun: 0.4 },
+      levels: [{ count: 1 }, { dmg: 0.3 }, { chain: 1 }, { cd: -0.12 }, { count: 1 }, { dmg: 0.3 }, { chain: 2 }],
+      evo: { passive: 'battery', name: 'Mega-Taser', desc: 'Dauerhafter Hochvolt-Kettenblitz mit Ketten-Betäubung.' },
+    },
+    pistol: {
+      name: 'Dienstwaffe P99', icon: '🔫', unlock: 0, kind: 'pistol', countLabel: 'Schuss',
+      desc: 'Präzise Schüsse in Blickrichtung mit Mündungsfeuer und Durchschlag.',
+      base: { dmg: 14, cd: 1.1, count: 1, speed: 520, size: 5, life: 1.2, pierce: 2 },
+      levels: [{ count: 1 }, { dmg: 0.3 }, { pierce: 1 }, { cd: -0.12 }, { count: 1 }, { dmg: 0.3 }, { pierce: 2 }],
+      evo: { passive: 'ammo', name: 'SWAT-Karabiner', desc: 'Vollautomatisches Schnellfeuer mit panzerbrechenden Geschossen.' },
+    },
+    siren: {
+      name: 'Blaulicht-Sirene', icon: '🚨', unlock: 2, kind: 'siren', countLabel: 'Schallwelle',
+      desc: 'Martinshorn & Blaulicht-Aura: Fügt allen Egges im Umkreis Schaden zu!',
+      base: { dmg: 10, cd: 0.8, count: 1, range: 95, kb: 110 },
+      levels: [{ area: 0.18 }, { dmg: 0.3 }, { area: 0.18 }, { cd: -0.1 }, { area: 0.18 }, { dmg: 0.3 }, { area: 0.25 }],
+      evo: { passive: 'megaphone', name: 'Martinshorn-Schallkanone', desc: 'Gigantischer Schallwellen-Radius mit permanentem Zurückdrängen.' },
+    },
+    pepperspray: {
+      name: 'Einsatz-Pfefferspray', icon: '💨', unlock: 3, kind: 'spray', countLabel: 'Sprühstoß',
+      desc: 'Sprüht Reizgas-Wolken vor dich. Verlangsamt und verätzt Egges.',
+      base: { dmg: 7, cd: 1.5, count: 1, speed: 180, size: 24, life: 1.0, slow: 0.5 },
+      levels: [{ count: 1 }, { dmg: 0.3 }, { area: 0.2 }, { cd: -0.12 }, { count: 1 }, { dmg: 0.3 }, { area: 0.2 }],
+      evo: { passive: 'filter', name: 'CS-Großraumvernebler', desc: '360-Grad Reizgasnebel, der alle Egges im Umkreis erstickt.' },
+    },
+    handcuffs: {
+      name: 'Handschellen-Wurf', icon: '⛓️', unlock: 4, kind: 'handcuffs', countLabel: 'Handschellen',
+      desc: 'Fliegende Handschellen prallen ab und fesseln getroffene Egges.',
+      base: { dmg: 12, cd: 1.6, count: 1, speed: 340, size: 13, bounces: 3, life: 2.5 },
       levels: [{ count: 1 }, { dmg: 0.3 }, { bounces: 1 }, { cd: -0.12 }, { count: 1 }, { dmg: 0.3 }, { bounces: 2 }],
-      evo: { passive: 'spoon', name: 'Riesenpfanne', desc: 'Die Pfanne wächst und prallt öfter.' },
+      evo: { passive: 'badge', name: 'Massen-Arrest', desc: 'Kettenfesselung, die Scharen von Egges zusammenschließt.' },
     },
-    whip: {
-      name: 'Gummihuhn-Peitsche', icon: '🐔', unlock: 0, kind: 'whip', countLabel: 'Schlag',
-      desc: 'Quietschende Hiebe, die Egges betäuben.',
-      base: { dmg: 14, cd: 1.5, count: 1, range: 105, arc: 100, kb: 230, stun: 0.5 },
+    watercannon: {
+      name: 'Wasserwerfer', icon: '🌊', unlock: 5, kind: 'watercannon', countLabel: 'Wasserstrahl',
+      desc: 'Schießt massive Hochdruck-Wasserschwälle, die Egges weit wegspülen.',
+      base: { dmg: 16, cd: 1.8, count: 1, speed: 380, size: 16, life: 1.1, pierce: 3, kb: 320 },
+      levels: [{ count: 1 }, { dmg: 0.3 }, { pierce: 1 }, { cd: -0.12 }, { count: 1 }, { dmg: 0.3 }, { pierce: 2 }],
+      evo: { passive: 'pump', name: 'Panzer-Wasserwerfer', desc: 'Gewaltige Flutwelle, die ganze Horden überrollt.' },
+    },
+    flashbang: {
+      name: 'Blendgranate', icon: '💥', unlock: 6, kind: 'flashbang', countLabel: 'Granate',
+      desc: 'Detoniert in einem blendenden Lichtblitz mit hohem Flächenschaden.',
+      base: { dmg: 22, cd: 2.2, count: 1, speed: 260, size: 10, blast: 80, life: 0.7, stun: 0.8 },
       levels: [{ count: 1 }, { dmg: 0.3 }, { area: 0.2 }, { cd: -0.12 }, { count: 1 }, { dmg: 0.3 }, { area: 0.2 }],
-      evo: { passive: 'alarm', name: 'Gummi-Gewitter', desc: 'Dauerfeuer aus Gummihuhn.' },
+      evo: { passive: 'holster', name: 'Cluster-Schockbatterie', desc: 'Zerspringt in 4 Sekundär-Blendgranaten für Kettenexplosionen.' },
     },
-    toaster: {
-      name: 'Toaster-Rakete', icon: '🍞', unlock: 2, kind: 'toast', countLabel: 'Toast',
-      desc: 'Fliegender Toast, der explodiert und anbrät.',
-      base: { dmg: 16, cd: 2.0, count: 1, speed: 250, size: 11, blast: 58, life: 1.4 },
-      levels: [{ count: 1 }, { dmg: 0.3 }, { area: 0.2 }, { cd: -0.12 }, { count: 1 }, { dmg: 0.3 }, { area: 0.2 }],
-      evo: { passive: 'clip', name: 'Toast Deluxe', desc: 'Größere Explosionen, mehr Toast.' },
+    drone: {
+      name: 'Überwachungsdrohne', icon: '🛸', unlock: 8, kind: 'drone', countLabel: 'Drohne',
+      desc: 'Autonome Polizeidrohne, die dich umkreist und Ziele mit Lasern beschießt.',
+      base: { dmg: 8, cd: 0.45, count: 1, range: 240, speed: 500 },
+      levels: [{ dmg: 0.25 }, { cd: -0.1 }, { count: 1 }, { dmg: 0.25 }, { range: 40 }, { cd: -0.1 }, { count: 1 }],
+      evo: { passive: 'radio', name: 'SWAT-Abfangdrohne', desc: 'Schwere Abfangdrohne mit Zwillings-Gatling und Suchscheinwerfer.' },
     },
-    banana: {
-      name: 'Bananen-Bumerang', icon: '🍌', unlock: 3, kind: 'boomerang', countLabel: 'Banane',
-      desc: 'Kommt immer zurück. Egges rutschen aus.',
-      base: { dmg: 10, cd: 2.1, count: 1, speed: 300, size: 13, dist: 240, slow: 0.45 },
-      levels: [{ count: 1 }, { dmg: 0.3 }, { area: 0.15 }, { cd: -0.1 }, { count: 1 }, { dmg: 0.3 }, { count: 1 }],
-      evo: { passive: 'shoes', name: 'Bananen-Orbit', desc: 'Ein Schwarm Bumerangs.' },
-    },
-    mower: {
-      name: 'Rasenmäher', icon: '🚜', unlock: 4, kind: 'mower', countLabel: 'Mäher',
-      desc: 'Mäht eine Schneise. Doppelter Schaden gegen bekiffte Egges.',
-      base: { dmg: 8, cd: 2.6, count: 1, speed: 250, size: 22, life: 1.3, hitCd: 0.3 },
-      levels: [{ count: 1 }, { dmg: 0.3 }, { area: 0.2 }, { cd: -0.12 }, { count: 1 }, { dmg: 0.3 }, { speed: 0.15 }],
-      evo: { passive: 'plate', name: 'Mähdrescher', desc: 'Mäht alles in Grund und Boden.' },
-    },
-    fish: {
-      name: 'Fischfächer', icon: '🐟', unlock: 5, kind: 'fan', countLabel: 'Fisch',
-      desc: 'Fächer aus Fischen. Stinkt: Getroffene nehmen mehr Schaden.',
-      base: { dmg: 9, cd: 1.5, count: 3, speed: 420, size: 11, life: 0.6, pierce: 3, spread: 50 },
-      levels: [{ count: 1 }, { dmg: 0.3 }, { pierce: 1 }, { count: 1 }, { cd: -0.12 }, { dmg: 0.3 }, { count: 2 }],
-      evo: { passive: 'sock', name: 'Fischsturm', desc: 'Eine Fischlawine.' },
-    },
-    bubbles: {
-      name: 'Seifenblasen-Kanone', icon: '🧼', unlock: 6, kind: 'bubble', countLabel: 'Blase',
-      desc: 'Blasen fangen Egges ein und platzen.',
-      base: { dmg: 18, cd: 2.3, count: 1, speed: 75, size: 16, life: 4.5, pop: 48, trap: 1.6 },
-      levels: [{ count: 1 }, { dmg: 0.3 }, { area: 0.2 }, { cd: -0.12 }, { count: 1 }, { dmg: 0.3 }, { area: 0.15 }],
-      evo: { passive: 'sweater', name: 'Riesenblase', desc: 'Platzt mit Riesenwumms.' },
-    },
-    disco: {
-      name: 'Disco-Kugel', icon: '🕺', unlock: 8, kind: 'aura', countLabel: 'Strahl',
-      desc: 'Lichtshow um dich: Egges tanzen langsamer und nehmen Schaden.',
-      base: { dmg: 6, cd: 0.4, count: 1, range: 85, slow: 0.4 },
-      levels: [{ area: 0.15 }, { dmg: 0.3 }, { area: 0.15 }, { dmg: 0.3 }, { area: 0.15 }, { dmg: 0.3 }, { area: 0.2 }],
-      evo: { passive: 'cookie', name: 'Stinkdisco', desc: 'Dancefloor des Grauens.' },
-    },
-    magnet: {
-      name: 'Kühlschrank-Magnet', icon: '🧲', unlock: 10, kind: 'gravity', countLabel: 'Magnet',
-      desc: 'Zieht Egges zusammen und lässt sie kollidieren.',
-      base: { dmg: 9, cd: 5.0, count: 1, range: 120, dur: 1.8 },
-      levels: [{ area: 0.2 }, { dmg: 0.3 }, { cd: -0.12 }, { count: 1 }, { area: 0.2 }, { dmg: 0.3 }, { count: 1 }],
-      evo: { passive: 'pants', name: 'Schwarzes Loch', desc: 'Verschluckt alles.' },
+    spikestrip: {
+      name: 'Nagelband', icon: '🚧', unlock: 10, kind: 'spikestrip', countLabel: 'Nagelband',
+      desc: 'Legt Stachelbänder auf den Boden, die verfolgende Egges zerfetzen.',
+      base: { dmg: 11, cd: 2.4, count: 1, size: 28, life: 6.0, hitCd: 0.4 },
+      levels: [{ count: 1 }, { dmg: 0.3 }, { area: 0.2 }, { cd: -0.12 }, { count: 1 }, { dmg: 0.3 }, { count: 1 }],
+      evo: { passive: 'boots', name: 'Hochsicherheits-Sperre', desc: 'Elektrifizierte Barrikaden, die Egges aufhalten und grillen.' },
     },
   };
 
-  /* ---------------------------------------------------------------- Passive Items */
+  /* ---------------------------------------------------------------- Passive Items (Polizei-Ausrüstung) */
   const PASSIVES = {
-    spoon:   { name: 'Löffel', icon: '🥄', max: 5, desc: '+10% Fläche', apply(s, l) { s.area *= 1 + 0.1 * l; } },
-    alarm:   { name: 'Wecker', icon: '⏰', max: 5, desc: '-7% Abklingzeit', apply(s, l) { s.cd *= Math.pow(0.93, l); } },
-    clip:    { name: 'Büroklammer', icon: '📎', max: 5, desc: '+10% Projektiltempo & Dauer', apply(s, l) { s.projSpeed *= 1 + 0.1 * l; s.duration *= 1 + 0.1 * l; } },
-    sweater: { name: 'Dicker Pulli', icon: '🧥', max: 5, desc: '+20 Max-HP', apply(s, l) { s.maxHp += 20 * l; } },
-    plate:   { name: 'Mampfteller', icon: '🍔', max: 5, desc: '+0.4 HP/Sek', apply(s, l) { s.regen += 0.4 * l; } },
-    pants:   { name: 'Magnet-Hose', icon: '👖', max: 5, desc: '+25% Einsammel-Radius', apply(s, l) { s.pickup *= 1 + 0.25 * l; } },
-    glove:   { name: 'Hammerhandschuh', icon: '🥊', max: 5, desc: '+10% Schaden', apply(s, l) { s.might *= 1 + 0.1 * l; } },
-    sock:    { name: 'Stinksocke', icon: '🧦', max: 5, desc: '-1 Schaden pro Treffer', apply(s, l) { s.armor += l; } },
-    shoes:   { name: 'Turnschuhe', icon: '👟', max: 5, desc: '+8% Lauftempo', apply(s, l) { s.speed *= 1 + 0.08 * l; } },
-    cookie:  { name: 'Glückskeks', icon: '🥠', max: 5, desc: '+4% Krit-Chance, +10% XP', apply(s, l) { s.crit += 0.04 * l; s.xp *= 1 + 0.1 * l; } },
+    vest:      { name: 'Schutzweste', icon: '🦺', max: 5, desc: '+20 Max-HP & +1 Rüstung', apply(s, l) { s.maxHp += 20 * l; s.armor += l; } },
+    battery:   { name: 'Hochleistungs-Akku', icon: '🔋', max: 5, desc: '-8% Abklingzeit', apply(s, l) { s.cd *= Math.pow(0.92, l); } },
+    ammo:      { name: 'Hohlspitz-Munition', icon: '📦', max: 5, desc: '+12% Schaden', apply(s, l) { s.might *= 1 + 0.12 * l; } },
+    megaphone: { name: 'Signal-Megafon', icon: '📢', max: 5, desc: '+15% Flächenradius (vergrößert Sirenenkreis & Explosionen)', apply(s, l) { s.area *= 1 + 0.15 * l; } },
+    filter:    { name: 'Aktivkohle-Filter', icon: '🤿', max: 5, desc: '+10% Wirkungsdauer & +0.4 HP/Sek', apply(s, l) { s.duration *= 1 + 0.1 * l; s.regen += 0.4 * l; } },
+    badge:     { name: 'Dienstmarke', icon: '🛡️', max: 5, desc: '+5% Krit-Chance & +15% Krit-Schaden', apply(s, l) { s.crit += 0.05 * l; s.critMul += 0.15 * l; } },
+    pump:      { name: 'Druckpumpe', icon: '🚰', max: 5, desc: '+12% Projektiltempo & +20% Rückstoß', apply(s, l) { s.projSpeed *= 1 + 0.12 * l; s.might *= 1 + 0.04 * l; } },
+    holster:   { name: 'Taktik-Koppel', icon: '🪢', max: 5, desc: '+1 Geschoss / Granaten-Menge', apply(s, l) { s.duration *= 1 + 0.05 * l; } },
+    radio:     { name: 'Polizeifunk', icon: '📻', max: 5, desc: '+12% XP-Ertrag & +10% Eierschalen', apply(s, l) { s.xp *= 1 + 0.12 * l; s.shell *= 1 + 0.1 * l; } },
+    boots:     { name: 'Einsatzstiefel', icon: '🥾', max: 5, desc: '+8% Lauftempo & +20% Einsammelradius', apply(s, l) { s.speed *= 1 + 0.08 * l; s.pickup *= 1 + 0.2 * l; } },
   };
 
   /* ---------------------------------------------------------------- Egges: jeder spawnt mit einem anderen Kiff-Gegenstand */
@@ -137,22 +137,22 @@
     stash:   { name: 'Dosen-Egge',     item: 'stash',   unlock: 5, hp: 14, speed: 78, dmg: 0, xp: 4, r: 11, scale: 1,    ai: 'flee', shells: 6, desc: 'Rennt mit dem Vorrat weg. Fang sie!' },
   };
 
-  /* ---------------------------------------------------------------- Perks (permanent, mit Nachteil) */
+  /* ---------------------------------------------------------------- Perks (Ordnungsdienst & Einsatz-Perks, mit Vor- & Nachteil) */
   const PERKS = [
-    { id: 'ruehrei', icon: '🍳', name: 'Rührei-Aura', pro: 'Gegner um dich herum braten (Dauerschaden)', con: 'Du bist 10% langsamer', apply(s) { s.auraDps += 7; s.speed *= 0.9; } },
-    { id: 'socken', icon: '🧦', name: 'Schwerkraft-Socken', pro: 'Egges werden zu dir gezogen (mehr Treffer)', con: 'Einsammel-Radius -40%', apply(s) { s.pull = 1; s.pickup *= 0.6; } },
-    { id: 'huehner', icon: '🐔', name: 'Hühner-Pakt', pro: 'Jeder 10. Kill beschwört ein pickendes Huhn (max. 6)', con: '-20% Max-HP', apply(s) { s.chickens = true; s.maxHp *= 0.8; } },
-    { id: 'wecker', icon: '⏰', name: 'Wecker-Herz', pro: 'Einmal Wiederbelebung mit 50% HP', con: 'Bosse haben +25% HP', apply(s) { s.revives += 1; s.bossHp *= 1.25; } },
-    { id: 'bananenpfad', icon: '🍌', name: 'Bananenschalen-Pfad', pro: 'Hinterlässt Schalen: Egges rutschen aus', con: 'Du rutschst bei Richtungswechseln', apply(s) { s.peels = true; s.slide = true; } },
-    { id: 'fluesterer', icon: '🙉', name: 'Egge-Flüsterer', pro: '15% der Egges laufen verängstigt weg', con: '+25% mehr Egges', apply(s) { s.timid = 0.15; s.enemyCount *= 1.25; } },
-    { id: 'muenze', icon: '💰', name: 'Glückspilz-Münze', pro: '+1 Auswahl bei Level-Ups', con: '-15% XP', apply(s) { s.choices += 1; s.xp *= 0.85; } },
-    { id: 'kaese', icon: '🧀', name: 'Käse-Rüstung', pro: '30% weniger erlittener Schaden', con: 'Egges riechen dich: +10% Tempo', apply(s) { s.dmgTaken *= 0.7; s.enemySpeed *= 1.1; } },
-    { id: 'kaffee', icon: '☕', name: 'Kaffee-Tasse', pro: '+20% Angriffstempo', con: '-25% Max-HP', apply(s) { s.cd *= 0.8; s.maxHp *= 0.75; } },
-    { id: 'glas', icon: '🦴', name: 'Glasknochen', pro: '+50% Schaden', con: '+50% erlittener Schaden', apply(s) { s.might *= 1.5; s.dmgTaken *= 1.5; } },
-    { id: 'gier', icon: '💎', name: 'Schalen-Gier', pro: '+40% Eierschalen', con: 'Egges haben +10% HP', apply(s) { s.shell *= 1.4; s.enemyHp *= 1.1; } },
-    { id: 'schnecke', icon: '🐌', name: 'Schneckentempo', pro: '+40% Fläche und +30% Schaden', con: '-30% Lauftempo', apply(s) { s.area *= 1.4; s.might *= 1.3; s.speed *= 0.7; } },
-    { id: 'gras', icon: '🌿', name: 'Grüner Daumen', pro: 'Mehr Grasflecken, Egges chillen länger', con: '+10% mehr Egges', apply(s) { s.grass = 1.6; s.enemyCount *= 1.1; } },
-    { id: 'goldstart', icon: '🏆', name: 'Goldener Start', pro: 'Startwaffe beginnt auf Level 3', con: '-20% XP', apply(s) { s.startWeaponLvl = 3; s.xp *= 0.8; } },
+    { id: 'siren_boost', icon: '🚨', name: 'Blaulicht-Einsatz', pro: 'Sirenen- & Wirkungskreis +60% größer & +30% Schaden', con: 'Blaulicht lockt Egges an: +15% mehr Egges', apply(s) { s.area *= 1.6; s.might *= 1.3; s.enemyCount *= 1.15; } },
+    { id: 'armor_vest', icon: '🦺', name: 'Riot-Schutzausrüstung', pro: 'Erleidest 35% weniger Schaden', con: 'Schwere Montur: -12% Lauftempo', apply(s) { s.dmgTaken *= 0.65; s.speed *= 0.88; } },
+    { id: 'high_voltage', icon: '⚡', name: 'Hochvolt-Überspannung', pro: 'Taser & Elektro springen weiter & +25% Schaden', con: 'Elektrosmog: -15% Max-HP', apply(s) { s.might *= 1.25; s.maxHp *= 0.85; } },
+    { id: 'defibrillator', icon: '💓', name: 'Defibrillator-Herz', pro: 'Einmal Wiederbelebung mit 60% HP & Schockwelle', con: 'Bosse haben +25% HP', apply(s) { s.revives += 1; s.bossHp *= 1.25; } },
+    { id: 'spikes', icon: '🚧', name: 'Nagelband-Spur', pro: 'Hinterlässt Stacheln: Egges nehmen beim Verfolgen Schaden', con: 'Du schlitterst leicht bei Kurven', apply(s) { s.peels = true; s.slide = true; } },
+    { id: 'megaphone_shout', icon: '📢', name: 'Platzverweis', pro: '20% der schwächeren Egges ergreifen panisch die Flucht', con: 'Verstärkung: +20% mehr Egges', apply(s) { s.timid = 0.2; s.enemyCount *= 1.2; } },
+    { id: 'patrol_briefing', icon: '📋', name: 'Einsatzbesprechung', pro: '+1 Upgrade-Auswahl bei jedem Level-Up', con: '-15% XP-Gewinn', apply(s) { s.choices += 1; s.xp *= 0.85; } },
+    { id: 'coffee_donut', icon: '☕', name: 'Kaffee & Donut Pause', pro: '+20% Angriffsgeschwindigkeit & +0.6 HP/s Regeneration', con: '-20% Max-HP', apply(s) { s.cd *= 0.8; s.regen += 0.6; s.maxHp *= 0.8; } },
+    { id: 'cs_gas', icon: '🧪', name: 'CS-Gas-Aura', pro: 'Ständige Reizgas-Aura fügt nahen Egges Dauerschaden zu', con: 'Reizt Augen: -10% Lauftempo', apply(s) { s.auraDps += 8; s.speed *= 0.9; } },
+    { id: 'sharpshooter', icon: '🎯', name: 'Präzisionsschütze', pro: '+50% Schaden & +10% Krit-Chance', con: 'Rückstoß: +40% erlittener Schaden', apply(s) { s.might *= 1.5; s.crit += 0.1; s.dmgTaken *= 1.4; } },
+    { id: 'evidence_locker', icon: '📦', name: 'Asservaten-Beschlagnahme', pro: '+50% verdiente Eierschalen 🥚', con: 'Egges wehren sich: +15% Egge-HP', apply(s) { s.shell *= 1.5; s.enemyHp *= 1.15; } },
+    { id: 'doperazzia', icon: '🌿', name: 'Gras-Razzia', pro: 'Egges im Gras nehmen 3x Schaden (statt 1.5x)', con: 'Mehr Grasflecken, Egges chillen hart', apply(s) { s.grass = 1.8; s.enemyCount *= 1.1; } },
+    { id: 'k9_unit', icon: '🐕', name: 'Spürhund-Staffel', pro: 'Spürhund-Begleiter greift Egges an & sammelt Beute', con: '-15% Max-HP', apply(s) { s.chickens = true; s.maxHp *= 0.85; } },
+    { id: 'early_shift', icon: '⏰', name: 'Frühschicht-Alarm', pro: 'Startwaffe beginnt sofort auf Level 3', con: '-20% XP-Ertrag', apply(s) { s.startWeaponLvl = 3; s.xp *= 0.8; } },
   ];
 
   /* ---------------------------------------------------------------- Skilltree (Meta, unendlich) */
@@ -230,6 +230,8 @@
     if (d.speed) out.push(`+${Math.round(d.speed * 100)}% Tempo`);
     if (d.bounces) out.push(`+${d.bounces} Abpraller`);
     if (d.pierce) out.push(`+${d.pierce} Durchschlag`);
+    if (d.chain) out.push(`+${d.chain} Ketten-Sprung`);
+    if (d.range) out.push(`+${d.range} Reichweite`);
     return out.join(', ');
   };
 

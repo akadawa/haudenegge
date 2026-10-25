@@ -83,8 +83,8 @@
       this.recompute(true);
 
       // Startwaffe
-      let start = opts.startWeapon || 'hammer';
-      if (!this.unlocked.includes(start)) start = 'hammer';
+      let start = opts.startWeapon || 'baton';
+      if (!this.unlocked.includes(start)) start = 'baton';
       this.addWeapon(start, this.stats.startWeaponLvl);
       this.startWeapon = start;
       if (this.stats.startRandom > 0) {
@@ -1092,6 +1092,14 @@
             this.hitEnemy(e, z.dmg, { stun: 0.9, noCrit: true });
           });
           if (hit) { this.zones.splice(i, 1); continue; }
+        } else if (z.kind === 'spikestrip') {
+          z.tickT = (z.tickT || 0) - dt;
+          if (z.tickT <= 0) {
+            z.tickT = z.hitCd || 0.4;
+            this.query(z.x, z.y, z.r, e => {
+              this.hitEnemy(e, z.dmg, { kb: 25, noCrit: true });
+            });
+          }
         } else if (z.kind === 'gravity') {
           z.tickT -= dt;
           const pull = 230 * dt;
@@ -1168,14 +1176,15 @@
       }
     }
 
-    /* ============================================================ WAFFEN */
+    /* ============================================================ WAFFEN (Polizei-Utilities) */
     updateWeapons(dt) {
       const p = this.player;
       for (const w of this.weapons) {
         const s = w.stats;
         switch (w.kind) {
           case 'orbit': this.updateOrbit(w, dt); break;
-          case 'aura': this.updateAura(w, dt); break;
+          case 'siren': this.updateSiren(w, dt); break;
+          case 'drone': this.updateDrone(w, dt); break;
           default: {
             w.cdT -= dt;
             if (w.pending > 0) {
@@ -1183,10 +1192,10 @@
               if (w.shotT <= 0) {
                 this.fireWeapon(w, w.shotIdx++);
                 w.pending--;
-                w.shotT = w.kind === 'whip' ? 0.2 : 0.11;
+                w.shotT = w.kind === 'spray' ? 0.08 : 0.12;
               }
             } else if (w.cdT <= 0) {
-              w.pending = Math.max(1, Math.round(w.kind === 'gravity' ? s.count : s.count));
+              w.pending = Math.max(1, Math.round(s.count));
               w.shotIdx = 0;
               w.shotT = 0;
               w.cdT = s.cd;
@@ -1210,22 +1219,52 @@
           if (e.hitT[w.slot] > time) return;
           e.hitT[w.slot] = time + s.hitCd;
           this.hitEnemy(e, s.dmg, { kb: s.kb, fx: p.x, fy: p.y });
+          if (w.evo) {
+            this.shockwave(ox, oy, 50, s.dmg * 0.4, 180);
+          }
         });
       }
     }
 
-    updateAura(w, dt) {
+    updateSiren(w, dt) {
       const p = this.player, s = w.stats;
-      w.markT -= dt;
-      if (w.markT <= 0) {
-        w.markT = 0.1;
-        const t = this.time + 0.25;
-        this.query(p.x, p.y, s.range, e => { e.dance = t; e.danceF = 1 - s.slow; });
+      const R = s.range;
+      w.pulseT = (w.pulseT || 0) - dt;
+      if (w.pulseT <= 0) {
+        w.pulseT = s.cd;
+        w.tickCount = (w.tickCount || 0) + 1;
+        const pulseColor = w.tickCount % 2 === 0 ? '#00a2ff' : '#ff2a4b';
+        this.fx.push({ kind: 'siren_pulse', x: p.x, y: p.y, r: R, t: 0, dur: 0.35, color: pulseColor });
+        this.query(p.x, p.y, R, e => {
+          this.hitEnemy(e, s.dmg, { kb: s.kb, fx: p.x, fy: p.y, slow: 0.35, noText: this.floaters.length > 22 });
+        });
+        this.sfx('siren');
       }
-      w.tickT -= dt;
-      if (w.tickT <= 0) {
-        w.tickT = s.cd;
-        this.query(p.x, p.y, s.range, e => this.hitEnemy(e, s.dmg, { noText: this.floaters.length > 22 }));
+      this.query(p.x, p.y, R, e => { e.sirened = this.time + 0.2; });
+    }
+
+    updateDrone(w, dt) {
+      const p = this.player, s = w.stats;
+      w.angle = (w.angle || 0) + dt * 2.8;
+      const droneDist = 65;
+      const dx = p.x + Math.cos(w.angle) * droneDist;
+      const dy = p.y + Math.sin(w.angle) * droneDist;
+      w.pos = [{ x: dx, y: dy, a: w.angle }];
+
+      w.shootT = (w.shootT || 0) - dt;
+      if (w.shootT <= 0) {
+        w.shootT = s.cd;
+        const target = this.nearestEnemy(dx, dy, s.range || 240);
+        if (target) {
+          const a = Math.atan2(target.y - dy, target.x - dx);
+          this.projectiles.push({
+            kind: 'drone_laser',
+            x: dx, y: dy,
+            vx: Math.cos(a) * s.speed, vy: Math.sin(a) * s.speed,
+            r: 4, dmg: s.dmg, life: 0.6, rot: a
+          });
+          this.sfx('zap');
+        }
       }
     }
 
@@ -1242,89 +1281,113 @@
     fireWeapon(w, idx) {
       const p = this.player, s = w.stats;
       switch (w.kind) {
-        case 'ricochet': {
-          const aim = this.aimDir(500);
-          const a = Math.atan2(aim.y, aim.x) + (idx > 0 ? this.rng.range(-0.5, 0.5) : 0);
-          this.projectiles.push({ kind: 'pan', x: p.x, y: p.y, vx: Math.cos(a) * s.speed, vy: Math.sin(a) * s.speed, r: s.size, dmg: s.dmg, life: s.life, bounces: s.bounces, last: 0, last2: 0, rot: 0, evo: w.evo });
-          this.sfx('throw');
-          break;
-        }
-        case 'whip': {
-          const dir = this.aimDir(220);
-          const sign = idx % 2 === 0 ? 1 : -1;
-          const base = Math.atan2(p.face.y, p.face.x);
-          const target = dir.t ? Math.atan2(dir.y, dir.x) : base;
-          const ang = idx % 2 === 0 ? target : target + Math.PI;
-          this.whipHit(w, ang);
-          this.sfx('whip');
-          break;
-        }
-        case 'toast': {
-          const t = this.randomNearEnemy(p.x, p.y, 460, 6);
-          let a;
-          if (t) a = Math.atan2(t.y - p.y, t.x - p.x) + this.rng.range(-0.08, 0.08);
-          else a = this.rng.range(0, TAU);
-          this.projectiles.push({ kind: 'toast', x: p.x, y: p.y, vx: Math.cos(a) * s.speed, vy: Math.sin(a) * s.speed, r: s.size, dmg: s.dmg, life: s.life, blast: s.blast, rot: a });
-          this.sfx('throw');
-          break;
-        }
-        case 'boomerang': {
-          const aim = this.aimDir(450);
-          const n = Math.round(s.count);
-          const a = Math.atan2(aim.y, aim.x) + (n > 1 ? (idx - (n - 1) / 2) * 0.35 : 0);
-          this.projectiles.push({ kind: 'banana', x: p.x, y: p.y, vx: Math.cos(a) * s.speed, vy: Math.sin(a) * s.speed, r: s.size, dmg: s.dmg, life: 8, phase: 'out', dist: s.dist, sx: p.x, sy: p.y, hits: [], rot: 0, speed: s.speed, slow: s.slow });
-          this.sfx('throw');
-          break;
-        }
-        case 'mower': {
-          const aim = this.aimDir(350);
-          const n = Math.round(s.count);
-          const a = Math.atan2(aim.y, aim.x) + (n > 1 ? (idx - (n - 1) / 2) * 0.5 : 0);
-          this.projectiles.push({ kind: 'mower', x: p.x, y: p.y, vx: Math.cos(a) * s.speed, vy: Math.sin(a) * s.speed, r: s.size, dmg: s.dmg, life: s.life, hitCd: s.hitCd, a });
-          this.sfx('mower');
-          break;
-        }
-        case 'fan': {
-          // alle Fische in einem Schwung
-          if (idx > 0) break;
-          const aim = this.aimDir(450);
-          const base = Math.atan2(aim.y, aim.x);
-          const n = Math.max(1, Math.round(s.count));
-          const spread = (s.spread * Math.PI) / 180;
-          for (let i = 0; i < n; i++) {
-            const a = n === 1 ? base : base - spread / 2 + (spread * i) / (n - 1);
-            this.projectiles.push({ kind: 'fish', x: p.x, y: p.y, vx: Math.cos(a) * s.speed, vy: Math.sin(a) * s.speed, r: s.size, dmg: s.dmg, life: s.life, pierce: s.pierce, hits: [], rot: a });
+        case 'taser': {
+          const target = this.nearestEnemy(p.x, p.y, s.range || 250);
+          if (target) {
+            const chainCount = Math.max(2, Math.round(s.chain || 2));
+            const hitList = [target];
+            let curr = target;
+            for (let c = 1; c < chainCount; c++) {
+              const next = this.nearestEnemy(curr.x, curr.y, 140, ...hitList.map(h => h.id));
+              if (next) {
+                hitList.push(next);
+                curr = next;
+              } else break;
+            }
+            let prev = { x: p.x, y: p.y };
+            for (const h of hitList) {
+              this.fx.push({ kind: 'lightning', x1: prev.x, y1: prev.y, x2: h.x, y2: h.y, t: 0, dur: 0.12 });
+              this.hitEnemy(h, s.dmg, { stun: s.stun || 0.4, kb: 50, fx: prev.x, fy: prev.y });
+              prev = h;
+            }
+            this.sfx('zap');
           }
-          // Rest der Salve überspringen
-          w.pending = 1;
+          break;
+        }
+        case 'pistol': {
+          const aim = this.aimDir(520);
+          const spread = idx > 0 ? this.rng.range(-0.15, 0.15) : 0;
+          const a = Math.atan2(aim.y, aim.x) + spread;
+          this.fx.push({ kind: 'muzzle', x: p.x + Math.cos(a) * 16, y: p.y + Math.sin(a) * 16, a, t: 0, dur: 0.08 });
+          this.projectiles.push({
+            kind: 'bullet',
+            x: p.x, y: p.y,
+            vx: Math.cos(a) * s.speed, vy: Math.sin(a) * s.speed,
+            r: s.size, dmg: s.dmg, life: s.life, pierce: s.pierce,
+            hits: [], rot: a, evo: w.evo
+          });
+          this.sfx('gunshot');
+          break;
+        }
+        case 'spray': {
+          const aim = this.aimDir(300);
+          const base = Math.atan2(p.face.y, p.face.x);
+          const n = 4;
+          for (let i = 0; i < n; i++) {
+            const a = base + this.rng.range(-0.45, 0.45);
+            const spd = s.speed * this.rng.range(0.8, 1.2);
+            this.projectiles.push({
+              kind: 'spray',
+              x: p.x, y: p.y,
+              vx: Math.cos(a) * spd, vy: Math.sin(a) * spd,
+              r: s.size * 0.7, dmg: s.dmg, life: s.life * this.rng.range(0.7, 1.1),
+              slow: s.slow, hits: [], rot: a, evo: w.evo
+            });
+          }
+          this.sfx('spray');
+          break;
+        }
+        case 'handcuffs': {
+          const aim = this.aimDir(500);
+          const a = Math.atan2(aim.y, aim.x) + (idx > 0 ? this.rng.range(-0.4, 0.4) : 0);
+          this.projectiles.push({
+            kind: 'handcuffs',
+            x: p.x, y: p.y,
+            vx: Math.cos(a) * s.speed, vy: Math.sin(a) * s.speed,
+            r: s.size, dmg: s.dmg, life: s.life, bounces: s.bounces,
+            last: 0, last2: 0, rot: 0, evo: w.evo
+          });
+          this.sfx('cuffs');
+          break;
+        }
+        case 'watercannon': {
+          const aim = this.aimDir(450);
+          const a = Math.atan2(aim.y, aim.x) + (idx > 0 ? this.rng.range(-0.25, 0.25) : 0);
+          this.projectiles.push({
+            kind: 'water',
+            x: p.x, y: p.y,
+            vx: Math.cos(a) * s.speed, vy: Math.sin(a) * s.speed,
+            r: s.size, dmg: s.dmg, life: s.life, pierce: s.pierce,
+            kb: s.kb, hits: [], rot: a, evo: w.evo
+          });
+          this.sfx('splash');
+          break;
+        }
+        case 'flashbang': {
+          const t = this.randomNearEnemy(p.x, p.y, 440, 6);
+          let a;
+          if (t) a = Math.atan2(t.y - p.y, t.x - p.x) + this.rng.range(-0.1, 0.1);
+          else a = this.rng.range(0, TAU);
+          this.projectiles.push({
+            kind: 'flashbang',
+            x: p.x, y: p.y,
+            vx: Math.cos(a) * s.speed, vy: Math.sin(a) * s.speed,
+            r: s.size, dmg: s.dmg, blast: s.blast, life: s.life,
+            stun: s.stun, rot: a, evo: w.evo
+          });
           this.sfx('throw');
           break;
         }
-        case 'bubble': {
-          const a = this.rng.range(0, TAU);
-          this.projectiles.push({ kind: 'bubble', x: p.x, y: p.y, vx: Math.cos(a) * s.speed, vy: Math.sin(a) * s.speed, r: s.size, dmg: s.dmg, life: s.life, pop: s.pop, trap: s.trap, state: 'free', target: null, t: 0, wob: this.rng.range(0, TAU) });
-          this.sfx('bubble');
-          break;
-        }
-        case 'gravity': {
-          const t = this.randomNearEnemy(p.x, p.y, 380, 8);
-          const x = t ? t.x : p.x + this.rng.range(-120, 120), y = t ? t.y : p.y + this.rng.range(-120, 120);
-          this.addZone({ kind: 'gravity', x, y, r: s.range, life: s.dur, max: s.dur, dmg: s.dmg, tickT: 0 });
+        case 'spikestrip': {
+          this.addZone({
+            kind: 'spikestrip',
+            x: p.x, y: p.y,
+            r: s.size, life: s.life, max: s.life,
+            dmg: s.dmg, hitCd: s.hitCd
+          });
           break;
         }
       }
-    }
-
-    whipHit(w, ang) {
-      const p = this.player, s = w.stats;
-      const cosT = Math.cos(((s.arc / 2) * Math.PI) / 180);
-      const dx0 = Math.cos(ang), dy0 = Math.sin(ang);
-      this.query(p.x, p.y, s.range, e => {
-        const dx = e.x - p.x, dy = e.y - p.y, d = Math.hypot(dx, dy) || 1;
-        if ((dx * dx0 + dy * dy0) / d < cosT && d > e.r + 12) return;
-        this.hitEnemy(e, s.dmg, { kb: s.kb, stun: s.stun });
-      });
-      this.fx.push({ kind: 'whip', x: p.x, y: p.y, a: ang, range: s.range, arc: s.arc, t: 0, dur: 0.18 });
     }
 
     /* ------------------------------------------------------------ Spieler-Projektile */
@@ -1334,98 +1397,87 @@
         const q = this.projectiles[i];
         let remove = false;
         switch (q.kind) {
-          case 'pan': {
-            q.x += q.vx * dt; q.y += q.vy * dt; q.life -= dt; q.rot += dt * 14;
-            let hit = null;
-            this.query(q.x, q.y, q.r, e => { if (!hit && e.id !== q.last && e.id !== q.last2) hit = e; });
-            if (hit) {
-              this.hitEnemy(hit, q.dmg, { kb: 120, fx: q.x, fy: q.y });
-              q.last2 = q.last; q.last = hit.id;
-              q.bounces--;
-              if (q.bounces >= 0) {
-                const t = this.nearestEnemy(q.x, q.y, 320, hit.id, q.last2);
-                const sp = Math.hypot(q.vx, q.vy);
-                if (t) { const dx = t.x - q.x, dy = t.y - q.y, d = Math.hypot(dx, dy) || 1; q.vx = (dx / d) * sp; q.vy = (dy / d) * sp; }
-              } else q.life = Math.min(q.life, 0.25);
-            }
-            if (q.life <= 0) remove = true;
-            break;
-          }
-          case 'toast': {
-            q.x += q.vx * dt; q.y += q.vy * dt; q.life -= dt;
-            let hit = false;
-            this.query(q.x, q.y, q.r, e => { hit = true; });
-            if (hit || q.life <= 0) {
-              this.explodeAt(q.x, q.y, q.blast, q.dmg, { burn: true });
-              remove = true;
-            }
-            break;
-          }
-          case 'banana': {
-            q.rot += dt * 12;
-            if (q.phase === 'out') {
-              q.x += q.vx * dt; q.y += q.vy * dt;
-              if (Math.hypot(q.x - q.sx, q.y - q.sy) >= q.dist) { q.phase = 'back'; q.hits.length = 0; }
-            } else {
-              const dx = p.x - q.x, dy = p.y - q.y, d = Math.hypot(dx, dy) || 1;
-              q.speed = Math.min(q.speed * 1.0 + 200 * dt, 700);
-              q.x += (dx / d) * q.speed * dt; q.y += (dy / d) * q.speed * dt;
-              if (d < 16) remove = true;
-            }
-            q.life -= dt;
-            if (q.life <= 0) remove = true;
-            this.query(q.x, q.y, q.r, e => {
-              if (q.hits.includes(e.id)) return;
-              q.hits.push(e.id);
-              this.hitEnemy(e, q.dmg, { kb: 80, fx: q.x, fy: q.y, slow: q.slow });
-            });
-            break;
-          }
-          case 'mower': {
-            q.x += q.vx * dt; q.y += q.vy * dt; q.life -= dt;
-            const time = this.time;
-            this.query(q.x, q.y, q.r, e => {
-              if (e.mowT > time) return;
-              e.mowT = time + q.hitCd;
-              this.hitEnemy(e, q.dmg, { kb: 60, fx: q.x, fy: q.y, vsChill: true });
-            });
-            // Mäht Grasflecken
-            if (!this.headless && this.rng.chance(0.4)) this.particle(q.x, q.y, '#6fcf5a');
-            if (q.life <= 0) remove = true;
-            break;
-          }
-          case 'fish': {
+          case 'bullet': {
             q.x += q.vx * dt; q.y += q.vy * dt; q.life -= dt;
             this.query(q.x, q.y, q.r, e => {
               if (q.pierce < 0 || q.hits.includes(e.id)) return;
               q.hits.push(e.id);
-              this.hitEnemy(e, q.dmg, { kb: 70, fx: q.x, fy: q.y, vuln: true });
+              this.hitEnemy(e, q.dmg, { kb: 80, fx: q.x, fy: q.y });
               q.pierce--;
               if (q.pierce < 0) q.life = 0;
             });
             if (q.life <= 0) remove = true;
             break;
           }
-          case 'bubble': {
-            q.t += dt;
-            if (q.state === 'free') {
-              q.x += (q.vx + Math.sin(q.t * 2 + q.wob) * 20) * dt;
-              q.y += (q.vy + Math.cos(q.t * 2 + q.wob) * 20) * dt;
-              q.life -= dt;
-              let hit = null;
-              this.query(q.x, q.y, q.r, e => { if (!hit) hit = e; });
-              if (hit) {
-                q.state = 'trap'; q.target = hit; q.left = q.trap;
-                if (hit.boss) { this.hitEnemy(hit, q.dmg * 0.5, {}); remove = true; this.popBubble(q); }
-                else hit.stun = Math.max(hit.stun, q.trap);
-              }
-              if (q.life <= 0) remove = true;
-            } else {
-              q.left -= dt;
-              const e = q.target;
-              if (e && !e.dead) { q.x = e.x; q.y = e.y - 4; if (e.stun < 0.2) e.stun = 0.2; }
-              if (q.left <= 0 || !e || e.dead) { this.popBubble(q); remove = true; }
+          case 'handcuffs': {
+            q.x += q.vx * dt; q.y += q.vy * dt; q.life -= dt; q.rot += dt * 12;
+            let hit = null;
+            this.query(q.x, q.y, q.r, e => { if (!hit && e.id !== q.last && e.id !== q.last2) hit = e; });
+            if (hit) {
+              this.hitEnemy(hit, q.dmg, { kb: 100, fx: q.x, fy: q.y });
+              q.last2 = q.last; q.last = hit.id;
+              q.bounces--;
+              if (q.bounces >= 0) {
+                const t = this.nearestEnemy(q.x, q.y, 300, hit.id, q.last2);
+                const sp = Math.hypot(q.vx, q.vy);
+                if (t) { const dx = t.x - q.x, dy = t.y - q.y, d = Math.hypot(dx, dy) || 1; q.vx = (dx / d) * sp; q.vy = (dy / d) * sp; }
+              } else q.life = Math.min(q.life, 0.2);
             }
+            if (q.life <= 0) remove = true;
+            break;
+          }
+          case 'spray': {
+            q.x += q.vx * dt; q.y += q.vy * dt;
+            q.vx *= Math.pow(0.2, dt); q.vy *= Math.pow(0.2, dt);
+            q.r += dt * 16;
+            q.life -= dt;
+            this.query(q.x, q.y, q.r, e => {
+              if (q.hits.includes(e.id)) return;
+              q.hits.push(e.id);
+              this.hitEnemy(e, q.dmg, { slow: q.slow, noCrit: true });
+            });
+            if (q.life <= 0) remove = true;
+            break;
+          }
+          case 'water': {
+            q.x += q.vx * dt; q.y += q.vy * dt; q.life -= dt;
+            this.query(q.x, q.y, q.r, e => {
+              if (q.pierce < 0 || q.hits.includes(e.id)) return;
+              q.hits.push(e.id);
+              this.hitEnemy(e, q.dmg, { kb: q.kb, fx: q.x, fy: q.y });
+              q.pierce--;
+              if (q.pierce < 0) q.life = 0;
+            });
+            if (q.life <= 0) remove = true;
+            break;
+          }
+          case 'flashbang': {
+            q.x += q.vx * dt; q.y += q.vy * dt;
+            q.vx *= Math.pow(0.3, dt); q.vy *= Math.pow(0.3, dt);
+            q.life -= dt;
+            if (q.life <= 0) {
+              this.explodeAt(q.x, q.y, q.blast, q.dmg, { stun: q.stun });
+              this.fx.push({ kind: 'flash', x: q.x, y: q.y, r: q.blast, t: 0, dur: 0.22 });
+              this.sfx('flash');
+              if (q.evo) {
+                for (let c = 0; c < 4; c++) {
+                  const ang = (c / 4) * TAU;
+                  this.explodeAt(q.x + Math.cos(ang) * 40, q.y + Math.sin(ang) * 40, q.blast * 0.6, q.dmg * 0.5, { stun: 0.5 });
+                }
+              }
+              remove = true;
+            }
+            break;
+          }
+          case 'drone_laser': {
+            q.x += q.vx * dt; q.y += q.vy * dt; q.life -= dt;
+            this.query(q.x, q.y, q.r, e => {
+              if (q.hit) return;
+              q.hit = true;
+              this.hitEnemy(e, q.dmg, { kb: 40, fx: q.x, fy: q.y });
+              q.life = 0;
+            });
+            if (q.life <= 0) remove = true;
             break;
           }
         }

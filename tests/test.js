@@ -102,10 +102,10 @@ test('Ewiger Knoten ist unendlich kaufbar mit steigenden Kosten', () => {
   eq(s.nodes.me, 100);
 });
 test('Stats: Skilltree & Perks wirken', () => {
-  const s = freshSave({ bestStage: 3, perks: ['glas'], nodes: { m1: 5, s1: 5 } });
+  const s = freshSave({ bestStage: 3, perks: ['sharpshooter'], nodes: { m1: 5, s1: 5 } });
   const st = Meta.computeStats(s);
   ok(Math.abs(st.might - 1.25 * 1.5) < 1e-9, 'might ' + st.might);
-  eq(st.maxHp, 150); ok(Math.abs(st.dmgTaken - 1.5) < 1e-9);
+  eq(st.maxHp, 150); ok(Math.abs(st.dmgTaken - 1.4) < 1e-9);
 });
 test('Perk-Wahl: nur bei freien Slots, keine Duplikate, Tauschen kostet', () => {
   const s = freshSave({ bestStage: 9 });
@@ -132,34 +132,34 @@ test('Perk-Wahl: nur bei freien Slots, keine Duplikate, Tauschen kostet', () => 
   ok(before !== Meta.perkChoices(s2).map(p => p.id).join() || true);
 });
 test('Waffen-Freischaltung nach Stage', () => {
-  eq(Meta.unlockedWeapons(0).length, 3); ok(Meta.unlockedWeapons(2).includes('toaster'));
+  eq(Meta.unlockedWeapons(0).length, 3); ok(Meta.unlockedWeapons(2).includes('siren'));
   eq(Meta.unlockedWeapons(10).length, Object.keys(D.WEAPONS).length);
 });
 test('Run-Ergebnis verbuchen (Rekord, neue Slots, neue Waffen)', () => {
   const s = freshSave({ bestStage: 2 });
   const info = Meta.applyRunResult(s, { shells: 50, kills: 100, bossKills: 2, stage: 9, time: 500, level: 20 });
   eq(s.shells, 50); eq(s.bestStage, 9); eq(info.newSlots, 2); ok(info.newBest);
-  ok(info.newWeapons.includes('banana') && info.newWeapons.includes('mower') && info.newWeapons.includes('fish') && info.newWeapons.includes('bubbles'));
+  ok(info.newWeapons.includes('pepperspray') && info.newWeapons.includes('handcuffs') && info.newWeapons.includes('watercannon') && info.newWeapons.includes('flashbang'));
   const info2 = Meta.applyRunResult(s, { shells: 5, kills: 1, bossKills: 0, stage: 3, time: 10, level: 2 });
   eq(info2.newSlots, 0); ok(!info2.newBest); eq(s.bestStage, 9);
 });
 
 console.log('\n== Speichern ==');
 test('Speichern/Laden im Browser-Speicher', () => {
-  Save.reset(); Save.data.shells = 77; Save.data.nodes.m1 = 3; Save.data.bestStage = 4; Save.data.perks = ['kaese'];
+  Save.reset(); Save.data.shells = 77; Save.data.nodes.m1 = 3; Save.data.bestStage = 4; Save.data.perks = ['armor_vest'];
   Save.save();
   Save.data = null; Save.load();
-  eq(Save.data.shells, 77); eq(Save.data.nodes.m1, 3); eq(Save.data.perks[0], 'kaese');
+  eq(Save.data.shells, 77); eq(Save.data.nodes.m1, 3); eq(Save.data.perks[0], 'armor_vest');
 });
 test('Kaputte/manipulierte Daten werden bereinigt', () => {
-  const s = Save.sanitize({ shells: -5, nodes: { m1: 99, kaputt: 3, s1: 'x' }, perks: ['kaese', 'kaese', 'nix'], bestStage: 'abc', settings: { vol: 7 }, lastWeapon: 'nix' });
+  const s = Save.sanitize({ shells: -5, nodes: { m1: 99, kaputt: 3, s1: 'x' }, perks: ['armor_vest', 'armor_vest', 'nix'], bestStage: 'abc', settings: { vol: 7 }, lastWeapon: 'nix' });
   eq(s.shells, 0); eq(s.nodes.m1, 5); ok(!('kaputt' in s.nodes)); eq(s.perks.length, 0, 'Perks ohne Slots'); eq(s.bestStage, 0);
-  eq(s.settings.vol, 1); eq(s.lastWeapon, 'hammer');
+  eq(s.settings.vol, 1); eq(s.lastWeapon, 'baton');
   const t = Save.sanitize(null); eq(t.shells, 0);
-  const u = Save.sanitize({ bestStage: 9, perks: ['kaese', 'kaese', 'glas', 'gier'] }); eq(u.perks.length, 2);
+  const u = Save.sanitize({ bestStage: 9, perks: ['armor_vest', 'armor_vest', 'sharpshooter', 'siren_boost'] }); eq(u.perks.length, 2);
 });
 test('Export/Import-Code Rundlauf und Fehlerfälle', () => {
-  Save.reset(); Save.data.shells = 1234; Save.data.nodes.g1 = 2; Save.data.bestStage = 9; Save.data.perks = ['kaese', 'glas'];
+  Save.reset(); Save.data.shells = 1234; Save.data.nodes.g1 = 2; Save.data.bestStage = 9; Save.data.perks = ['armor_vest', 'sharpshooter'];
   const code = Save.exportCode(); ok(code.startsWith('HDE1:'));
   Save.reset(); eq(Save.data.shells, 0);
   const r = Save.importCode(code); ok(r.ok);
@@ -195,11 +195,26 @@ test('Highscores: Eintragen, Sortierung, Begrenzung, Namensbereinigung', () => {
 console.log('\n== Spiel ==');
 test('Spielstart: Startwaffe, Werte, freigeschaltete Waffen', () => {
   const g = new Game(freshSave(), { seed: 1, headless: true });
-  eq(g.weapons.length, 1); eq(g.weapons[0].id, 'hammer'); eq(g.player.maxHp, 100);
-  const g2 = new Game(freshSave(), { seed: 1, headless: true, startWeapon: 'magnet' });
-  eq(g2.weapons[0].id, 'hammer', 'gesperrte Waffe fällt auf Hammer zurück');
-  const g3 = new Game(freshSave({ bestStage: 10 }), { seed: 1, headless: true, startWeapon: 'magnet' });
-  eq(g3.weapons[0].id, 'magnet');
+  eq(g.weapons.length, 1); eq(g.weapons[0].id, 'baton'); eq(g.player.maxHp, 100);
+  const g2 = new Game(freshSave(), { seed: 1, headless: true, startWeapon: 'spikestrip' });
+  eq(g2.weapons[0].id, 'baton', 'gesperrte Waffe fällt auf Baton zurück');
+  const g3 = new Game(freshSave({ bestStage: 10 }), { seed: 1, headless: true, startWeapon: 'spikestrip' });
+  eq(g3.weapons[0].id, 'spikestrip');
+});
+test('Blaulicht-Sirene: Radius skaliert sichtbar durch Megafon und Perks', () => {
+  const g = new Game(freshSave({ bestStage: 10 }), { seed: 1, headless: true, startWeapon: 'siren' });
+  const baseRange = g.weapons[0].stats.range;
+  ok(baseRange > 50, 'Basis-Reichweite vorhanden');
+
+  // Füge Megafon hinzu (+15% Fläche pro Level)
+  g.passives['megaphone'] = 3;
+  g.recompute();
+  const boostedRange = g.weapons[0].stats.range;
+  ok(boostedRange > baseRange, `Megafon vergrößert Sirenenradius: ${baseRange} -> ${boostedRange}`);
+
+  // Mit Blaulicht-Einsatz Perk (+60% Fläche)
+  const g2 = new Game(freshSave({ bestStage: 10, perks: ['siren_boost'] }), { seed: 1, headless: true, startWeapon: 'siren' });
+  ok(g2.weapons[0].stats.range >= baseRange * 1.55, 'Perk vergrößert Sirene massiv');
 });
 test('Jeder Spawn hat einen anderen Kiff-Gegenstand als der vorherige', () => {
   const g = new Game(freshSave(), { seed: 5, headless: true });
@@ -295,7 +310,7 @@ test('Spieler: Schaden, Rüstung, Unverwundbarkeit, Tod, Revive', () => {
   const g = new Game(freshSave(), { seed: 4, headless: true });
   g.hurtPlayer(10); eq(g.player.hp, 90); g.hurtPlayer(10); eq(g.player.hp, 90, 'iframes');
   g.player.iframes = 0; g.stats.armor = 100; g.hurtPlayer(10); eq(g.player.hp, 89, 'mind. 1 Schaden');
-  const g2 = new Game(freshSave({ bestStage: 9, perks: ['wecker'] }), { seed: 4, headless: true });
+  const g2 = new Game(freshSave({ bestStage: 9, perks: ['defibrillator'] }), { seed: 4, headless: true });
   eq(g2.stats.revives, 1);
   g2.player.hp = 1; g2.hurtPlayer(50);
   eq(g2.state, 'playing', 'Wiederbelebung'); ok(g2.player.hp >= g2.player.maxHp * 0.5 - 1);
@@ -303,7 +318,7 @@ test('Spieler: Schaden, Rüstung, Unverwundbarkeit, Tod, Revive', () => {
   eq(g2.state, 'dead'); ok(g2.result && g2.result.stage === 1);
 });
 test('Bewegung & Eingabe, auch mit Rutsch-Perk', () => {
-  for (const perks of [[], ['bananenpfad']]) {
+  for (const perks of [[], ['spikes']]) {
     const g = new Game(freshSave({ bestStage: 3, perks }), { seed: 4, headless: true });
     g.spawnAcc = -1e9; g.input.x = 1; g.input.y = 0;
     for (let i = 0; i < 60; i++) g.update(1 / 60);
@@ -393,11 +408,11 @@ test('Alle Gegner-Typen spawnen, bewegen sich, greifen an, sterben', () => {
   for (let i = 0; i < 120; i++) g.update(1 / 60);
   checkInvariants(g, 'typen');
 });
-test('Mutationen: Wunder-Upgrade, Explosion, Hühner, Rührei, Bananenpfad', () => {
-  const g = new Game(freshSave({ bestStage: 300, perks: ['huehner', 'ruehrei', 'bananenpfad'], nodes: { m1: 5, c1: 5, c3: 5, c4: 5, c5: 5 } }), { seed: 15, headless: true });
+test('Mutationen: Wunder-Upgrade, Explosion, Spürhund, CS-Gas, Nagelband', () => {
+  const g = new Game(freshSave({ bestStage: 300, perks: ['k9_unit', 'cs_gas', 'spikes'], nodes: { m1: 5, c1: 5, c3: 5, c4: 5, c5: 5 } }), { seed: 15, headless: true });
   g.player.maxHp = g.player.hp = 5000;
   simulate(g, 60, makeBot(g, 'greedy'), 'mut');
-  ok(g.companions.length > 0, 'Hühner'); ok(g.kills > 50);
+  ok(g.companions.length > 0, 'Spürhund-Staffel'); ok(g.kills > 50);
 });
 test('Meta-Progression macht Runs länger (Skilltree stärkt)', () => {
   function avgStage(save, n = 2) {
@@ -416,7 +431,7 @@ test('Meta-Progression macht Runs länger (Skilltree stärkt)', () => {
   }
   const weak = avgStage(freshSave());
   const nodes = { m1: 5, m2: 5, m3: 5, m4: 5, m5: 5, s1: 5, s2: 5, s3: 3, s5: 5, g1: 5, g3: 5, me: 30, se: 30 };
-  const strong = avgStage(freshSave({ nodes, bestStage: 9, perks: ['kaese', 'kaffee'] }));
+  const strong = avgStage(freshSave({ nodes, bestStage: 9, perks: ['armor_vest', 'coffee_donut'] }));
   console.log(`      Ø Stage ohne Meta: ${weak.toFixed(1)}, mit Meta: ${strong.toFixed(1)} (max. 10 Spielminuten)`);
   ok(strong >= weak, 'Meta soll helfen');
 });

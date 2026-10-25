@@ -158,6 +158,11 @@
           ctx.restore();
         } else if (z.kind === 'peel') {
           ctx.drawImage(Sprites.emoji('🍌', 18), z.x - 9, z.y - 9, 18, 18);
+        } else if (z.kind === 'spikestrip') {
+          ctx.save();
+          ctx.globalAlpha = Math.min(0.95, frac + 0.2);
+          ctx.drawImage(Sprites.emoji('🚧', 24), z.x - 12, z.y - 12, 24, 24);
+          ctx.restore();
         } else if (z.kind === 'gravity') {
           ctx.save();
           ctx.globalAlpha = 0.35 + Math.sin(t * 12) * 0.15;
@@ -353,60 +358,110 @@
       ctx.restore();
     }
 
-    /* ------------------------------------------------------------ Waffen */
+    /* ------------------------------------------------------------ Waffen (Polizei-Utilities) */
     renderWeapons(ctx, game) {
       const p = game.player;
 
-      // Orbit-Hämmer
-      const hammer = game.getWeapon('hammer');
-      if (hammer && hammer.pos) {
-        for (const pos of hammer.pos) {
+      // 1. Blaulicht-Sirene: Deutlich sichtbarer, dynamisch mit Skills & Perks skalierender Umkreis!
+      const siren = game.getWeapon('siren');
+      if (siren) {
+        const r = siren.stats.range;
+        const time = game.time;
+        ctx.save();
+        const isBlue = Math.sin(time * 6) > 0;
+
+        // Weicher Blaulicht/Rotlicht-Verlauf im Umkreis
+        const glowGrad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r);
+        glowGrad.addColorStop(0, isBlue ? 'rgba(0, 140, 255, 0.22)' : 'rgba(255, 30, 60, 0.22)');
+        glowGrad.addColorStop(0.75, isBlue ? 'rgba(0, 140, 255, 0.08)' : 'rgba(255, 30, 60, 0.08)');
+        glowGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        ctx.fillStyle = glowGrad;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r, 0, TAU);
+        ctx.fill();
+
+        // Gut sichtbare, rotierende gestrichelte Umfangslinie
+        ctx.strokeStyle = isBlue ? '#00c3ff' : '#ff3366';
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([9, 7]);
+        ctx.lineDashOffset = -time * 35;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r, 0, TAU);
+        ctx.stroke();
+
+        // Ausbreitende Schallwellen-Ringe
+        const waveFrac = (time * 1.6) % 1;
+        const waveR = r * waveFrac;
+        ctx.setLineDash([]);
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = isBlue ? `rgba(0, 210, 255, ${0.45 * (1 - waveFrac)})` : `rgba(255, 80, 110, ${0.45 * (1 - waveFrac)})`;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, waveR, 0, TAU);
+        ctx.stroke();
+
+        ctx.restore();
+      }
+
+      // 2. Orbit-Schlagstöcke
+      const baton = game.getWeapon('baton');
+      if (baton && baton.pos) {
+        for (const pos of baton.pos) {
           ctx.save();
           ctx.translate(pos.x, pos.y);
           ctx.rotate(pos.a + Math.PI / 2);
-          const sz = hammer.stats.size * 2.2;
-          ctx.drawImage(Sprites.emoji('🔨', Math.round(sz)), -sz / 2, -sz / 2, sz, sz);
+          const sz = baton.stats.size * 2.2;
+          ctx.drawImage(Sprites.emoji('🦯', Math.round(sz)), -sz / 2, -sz / 2, sz, sz);
           ctx.restore();
         }
       }
 
-      // Disco-Aura
-      const disco = game.getWeapon('disco');
-      if (disco) {
+      // 3. Überwachungsdrohne
+      const drone = game.getWeapon('drone');
+      if (drone && drone.pos && drone.pos[0]) {
+        const d = drone.pos[0];
         ctx.save();
-        ctx.globalAlpha = 0.22 + Math.sin(game.time * 8) * 0.1;
-        ctx.strokeStyle = '#e858e8';
-        ctx.lineWidth = 3;
+        ctx.translate(d.x, d.y);
+        ctx.drawImage(Sprites.emoji('🛸', 26), -13, -13, 26, 26);
+        // Blaulicht-LED auf der Drohne
+        ctx.fillStyle = Math.sin(game.time * 16) > 0 ? '#00b0ff' : '#ff3344';
         ctx.beginPath();
-        ctx.arc(p.x, p.y, disco.stats.range, 0, TAU);
-        ctx.stroke();
+        ctx.arc(0, -6, 2.5, 0, TAU);
+        ctx.fill();
         ctx.restore();
       }
 
-      // Projektile (Pfanne, Toast, Banane, Rasenmäher, Fisch, Blasen)
+      // 4. Projektile (Kugeln, Handschellen, Pfefferspray, Wasserwerfer, Blendgranaten, Laser)
       for (const q of game.projectiles) {
         ctx.save();
         ctx.translate(q.x, q.y);
         ctx.rotate(q.rot || q.a || 0);
         let sz = q.r * 2.2;
         switch (q.kind) {
-          case 'pan':
-            ctx.drawImage(Sprites.emoji('🍳', Math.round(sz)), -sz / 2, -sz / 2, sz, sz);
+          case 'bullet':
+            ctx.fillStyle = '#ffea55';
+            ctx.fillRect(-sz, -2, sz * 2, 4);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(-sz * 0.4, -1, sz * 0.8, 2);
             break;
-          case 'toast':
-            ctx.drawImage(Sprites.emoji('🍞', Math.round(sz)), -sz / 2, -sz / 2, sz, sz);
+          case 'handcuffs':
+            ctx.drawImage(Sprites.emoji('⛓️', Math.round(sz)), -sz / 2, -sz / 2, sz, sz);
             break;
-          case 'banana':
-            ctx.drawImage(Sprites.emoji('🍌', Math.round(sz)), -sz / 2, -sz / 2, sz, sz);
+          case 'spray':
+            ctx.globalAlpha = Math.min(0.65, q.life * 0.9);
+            ctx.fillStyle = '#ff7a22';
+            ctx.beginPath();
+            ctx.arc(0, 0, q.r, 0, TAU);
+            ctx.fill();
             break;
-          case 'mower':
-            ctx.drawImage(Sprites.emoji('🚜', Math.round(sz)), -sz / 2, -sz / 2, sz, sz);
+          case 'water':
+            ctx.drawImage(Sprites.emoji('🌊', Math.round(sz * 1.5)), -sz * 0.75, -sz * 0.75, sz * 1.5, sz * 1.5);
             break;
-          case 'fish':
-            ctx.drawImage(Sprites.emoji('🐟', Math.round(sz)), -sz / 2, -sz / 2, sz, sz);
+          case 'flashbang':
+            ctx.drawImage(Sprites.emoji('💥', Math.round(sz * 1.8)), -sz * 0.9, -sz * 0.9, sz * 1.8, sz * 1.8);
             break;
-          case 'bubble':
-            ctx.drawImage(Sprites.emoji('🧼', Math.round(sz)), -sz / 2, -sz / 2, sz, sz);
+          case 'drone_laser':
+            ctx.fillStyle = '#00f0ff';
+            ctx.fillRect(-6, -1.5, 12, 3);
             break;
         }
         ctx.restore();
@@ -431,25 +486,47 @@
     renderEffects(ctx, game) {
       for (const f of game.fx) {
         const frac = f.t / f.dur;
-        if (f.kind === 'ring' || f.kind === 'boom') {
+        if (f.kind === 'ring' || f.kind === 'boom' || f.kind === 'siren_pulse') {
           ctx.save();
           ctx.globalAlpha = 1 - frac;
           ctx.strokeStyle = f.color || '#ffe14a';
           ctx.lineWidth = 4 * (1 - frac * 0.5);
           ctx.beginPath();
-          ctx.arc(f.x, f.y, f.max * frac, 0, TAU);
+          ctx.arc(f.x, f.y, f.r * frac, 0, TAU);
           ctx.stroke();
           ctx.restore();
-        } else if (f.kind === 'whip') {
-          // Peitschen-Hieb Bogen
+        } else if (f.kind === 'lightning') {
+          // Taser Elektro-Lichtbogen
           ctx.save();
           ctx.globalAlpha = 1 - frac;
-          ctx.strokeStyle = '#ffe85a';
-          ctx.lineWidth = 6;
+          ctx.strokeStyle = '#00f0ff';
+          ctx.lineWidth = 2.5;
           ctx.beginPath();
-          const halfArc = ((f.arc / 2) * Math.PI) / 180;
-          ctx.arc(f.x, f.y, f.range * 0.9, f.a - halfArc, f.a + halfArc);
+          ctx.moveTo(f.x1, f.y1);
+          // 2-3 Zacken im Blitz
+          const midX = (f.x1 + f.x2) / 2 + (Math.random() - 0.5) * 20;
+          const midY = (f.y1 + f.y2) / 2 + (Math.random() - 0.5) * 20;
+          ctx.lineTo(midX, midY);
+          ctx.lineTo(f.x2, f.y2);
           ctx.stroke();
+          ctx.restore();
+        } else if (f.kind === 'flash') {
+          // Blendgranaten-Blitz
+          ctx.save();
+          ctx.globalAlpha = (1 - frac) * 0.7;
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, f.r, 0, TAU);
+          ctx.fill();
+          ctx.restore();
+        } else if (f.kind === 'muzzle') {
+          // Mündungsfeuer
+          ctx.save();
+          ctx.globalAlpha = 1 - frac;
+          ctx.fillStyle = '#ffeb3b';
+          ctx.beginPath();
+          ctx.arc(f.x, f.y, 5, 0, TAU);
+          ctx.fill();
           ctx.restore();
         }
       }

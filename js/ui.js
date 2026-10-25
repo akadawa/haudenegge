@@ -13,7 +13,7 @@
 
     constructor() {
       this.game = null;
-      this.selectedStartWeapon = this.save.lastWeapon || 'hammer';
+      this.selectedStartWeapon = this.save.lastWeapon || 'baton';
       this.lastRunResult = null;
 
       // DOM Referenzen

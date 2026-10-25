@@ -62,7 +62,7 @@
       perks: [],            // ausgerüstete Perks (Reihenfolge = Slot)
       perkSeed: (Math.random() * 4294967296) >>> 0,   // macht die Perk-Angebote stabil
       perkRerolls: 0,
-      lastWeapon: 'hammer',
+      lastWeapon: 'baton',
       settings: { sound: true, music: true, photo: false, vol: 0.6 },
       created: Date.now(),
     };

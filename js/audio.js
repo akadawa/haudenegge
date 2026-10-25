@@ -56,6 +56,121 @@
       osc.stop(t + 0.09);
     },
 
+    siren: () => {
+      if (!ctx || !sfxGain) return;
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(440, t);
+      osc.frequency.linearRampToValueAtTime(587.33, t + 0.12);
+      osc.frequency.linearRampToValueAtTime(440, t + 0.24);
+      g.gain.setValueAtTime(0.2, t);
+      g.gain.exponentialRampToValueAtTime(0.01, t + 0.25);
+      osc.connect(g);
+      g.connect(sfxGain);
+      osc.start(t);
+      osc.stop(t + 0.26);
+    },
+
+    zap: () => {
+      if (!ctx || !sfxGain) return;
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(800 + Math.random() * 400, t);
+      osc.frequency.exponentialRampToValueAtTime(120, t + 0.08);
+      g.gain.setValueAtTime(0.25, t);
+      g.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
+      osc.connect(g);
+      g.connect(sfxGain);
+      osc.start(t);
+      osc.stop(t + 0.09);
+    },
+
+    gunshot: () => {
+      if (!ctx || !sfxGain) return;
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(320, t);
+      osc.frequency.exponentialRampToValueAtTime(40, t + 0.07);
+      g.gain.setValueAtTime(0.4, t);
+      g.gain.exponentialRampToValueAtTime(0.01, t + 0.08);
+      osc.connect(g);
+      g.connect(sfxGain);
+      osc.start(t);
+      osc.stop(t + 0.09);
+    },
+
+    spray: () => {
+      if (!ctx || !sfxGain) return;
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(950, t);
+      osc.frequency.linearRampToValueAtTime(1300, t + 0.06);
+      osc.frequency.linearRampToValueAtTime(700, t + 0.12);
+      g.gain.setValueAtTime(0.15, t);
+      g.gain.exponentialRampToValueAtTime(0.01, t + 0.13);
+      osc.connect(g);
+      g.connect(sfxGain);
+      osc.start(t);
+      osc.stop(t + 0.14);
+    },
+
+    cuffs: () => {
+      if (!ctx || !sfxGain) return;
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1400, t);
+      osc.frequency.exponentialRampToValueAtTime(2200, t + 0.04);
+      osc.frequency.exponentialRampToValueAtTime(1200, t + 0.09);
+      g.gain.setValueAtTime(0.2, t);
+      g.gain.exponentialRampToValueAtTime(0.01, t + 0.1);
+      osc.connect(g);
+      g.connect(sfxGain);
+      osc.start(t);
+      osc.stop(t + 0.11);
+    },
+
+    splash: () => {
+      if (!ctx || !sfxGain) return;
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(160, t);
+      osc.frequency.linearRampToValueAtTime(90, t + 0.14);
+      g.gain.setValueAtTime(0.3, t);
+      g.gain.exponentialRampToValueAtTime(0.01, t + 0.15);
+      osc.connect(g);
+      g.connect(sfxGain);
+      osc.start(t);
+      osc.stop(t + 0.16);
+    },
+
+    flash: () => {
+      if (!ctx || !sfxGain) return;
+      const t = ctx.currentTime;
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(3200, t);
+      osc.frequency.exponentialRampToValueAtTime(800, t + 0.2);
+      g.gain.setValueAtTime(0.3, t);
+      g.gain.exponentialRampToValueAtTime(0.01, t + 0.22);
+      osc.connect(g);
+      g.connect(sfxGain);
+      osc.start(t);
+      osc.stop(t + 0.23);
+    },
+
     whip: () => {
       if (!ctx || !sfxGain) return;
       const t = ctx.currentTime;

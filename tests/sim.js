@@ -7,8 +7,8 @@ const { Meta, Save, Game } = HDE;
 const scenarios = {
   neu:     () => Save.defaults(),
   fruehe:  () => Object.assign(Save.defaults(), { bestStage: 3, nodes: { m1: 3, m2: 2, s1: 3, s2: 2, g1: 3 } }),
-  mittel:  () => Object.assign(Save.defaults(), { bestStage: 9, perks: ['kaese', 'kaffee'], nodes: { m1: 5, m2: 5, m3: 5, m4: 3, m5: 3, s1: 5, s2: 5, s3: 2, s5: 5, g1: 5, g2: 5, g3: 5, g4: 2, c1: 5, c3: 3, c5: 3 } }),
-  stark:   () => Object.assign(Save.defaults(), { bestStage: 30, perks: ['kaese', 'kaffee', 'glas', 'huehner'], nodes: { m1: 5, m2: 5, m3: 5, m4: 5, m5: 5, s1: 5, s2: 5, s3: 3, s4: 1, s5: 5, g1: 5, g2: 5, g3: 5, g4: 3, g5: 3, c1: 5, c2: 1, c3: 5, c4: 5, c5: 5, me: 40, se: 40, ge: 20, ce: 20 } }),
+  mittel:  () => Object.assign(Save.defaults(), { bestStage: 9, perks: ['armor_vest', 'coffee_donut'], nodes: { m1: 5, m2: 5, m3: 5, m4: 3, m5: 3, s1: 5, s2: 5, s3: 2, s5: 5, g1: 5, g2: 5, g3: 5, g4: 2, c1: 5, c3: 3, c5: 3 } }),
+  stark:   () => Object.assign(Save.defaults(), { bestStage: 30, perks: ['armor_vest', 'coffee_donut', 'sharpshooter', 'k9_unit'], nodes: { m1: 5, m2: 5, m3: 5, m4: 5, m5: 5, s1: 5, s2: 5, s3: 3, s4: 1, s5: 5, g1: 5, g2: 5, g3: 5, g4: 3, g5: 3, c1: 5, c2: 1, c3: 5, c4: 5, c5: 5, me: 40, se: 40, ge: 20, ce: 20 } }),
 };
 
 const which = process.argv[2] ? [process.argv[2]] : Object.keys(scenarios);
