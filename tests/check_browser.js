@@ -162,6 +162,34 @@ server.listen(PORT, async () => {
                   const hpLabel = document.getElementById('hp-label');
                   const hpStyle = window.getComputedStyle(hpLabel);
                   console.log('HP label white-space: ' + hpStyle.whiteSpace);
+
+                  // Überprüfe HUD-Positionierung: Unten in der Mitte & keine Überlagerung
+                  const bottomRow = document.querySelector('.hud-bottom-row');
+                  const itemRow = document.querySelector('.hud-item-row');
+                  const hpBox = document.querySelector('.hp-bar-container');
+                  const shellBox = document.querySelector('.shells-box');
+                  const stageBadge = document.getElementById('stage-badge');
+
+                  const bRect = bottomRow.getBoundingClientRect();
+                  const iRect = itemRow.getBoundingClientRect();
+                  const hpRect = hpBox.getBoundingClientRect();
+                  const sRect = shellBox.getBoundingClientRect();
+                  const stRect = stageBadge.getBoundingClientRect();
+
+                  const screenCenterX = window.innerWidth / 2;
+                  const rowCenterX = (bRect.left + bRect.right) / 2;
+                  const isCentered = Math.abs(screenCenterX - rowCenterX) < 15;
+                  const isAtBottom = bRect.bottom <= window.innerHeight && bRect.top >= window.innerHeight - 80;
+                  const overlapsItems = !(bRect.top >= iRect.bottom || bRect.bottom <= iRect.top || bRect.left >= iRect.right || bRect.right <= iRect.left);
+                  const elementsOverlap = !(hpRect.right <= sRect.left && sRect.right <= stRect.left);
+
+                  console.log('HUD bottom-row centered: ' + isCentered + ' (offset: ' + Math.abs(screenCenterX - rowCenterX).toFixed(1) + 'px)');
+                  console.log('HUD bottom-row at bottom: ' + isAtBottom + ' (bottom: ' + bRect.bottom + ', window: ' + window.innerHeight + ')');
+                  console.log('HUD overlaps item-row: ' + overlapsItems);
+                  console.log('HUD elements overlap each other: ' + elementsOverlap);
+                  if (!isCentered || !isAtBottom || overlapsItems || elementsOverlap) {
+                    throw new Error('HUD positioning error: centered=' + isCentered + ', atBottom=' + isAtBottom + ', overlapsItems=' + overlapsItems + ', elementsOverlap=' + elementsOverlap);
+                  }
                 `
               });
               setTimeout(resolve, 1500);
